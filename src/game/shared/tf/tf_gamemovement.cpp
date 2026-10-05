@@ -28,11 +28,13 @@
 	#include "c_world.h"
 	#include "c_team.h"
 	#include "prediction.h"
+	#include "c_tf_skate_predict.h"
 
 	#define CTeam C_Team
 
 #else
 	#include "tf_player.h"
+	#include "tf_skate_sidecar.h"
 	#include "team.h"
 	#include "bot/tf_bot.h"
 	#include "tf_fx.h"
@@ -123,6 +125,7 @@ public:
 	bool			ChargeMove( void );
 	bool			StunMove( void );
 	bool			TauntMove( void );
+	void			SkateMove( void );
 	void			VehicleMove( void );
 	bool			HighMaxSpeedMove( void );
 	virtual float	GetAirSpeedCap( void );
@@ -309,6 +312,23 @@ void CTFGameMovement::ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMov
 
 	// The max speed is currently set to the scout - if this changes we need to change this!
 	mv->m_flMaxSpeed = TF_MAX_SPEED;
+
+#ifdef CLIENT_DLL
+	// tf2-skate: keep every new usercmd's skate input, so the predicted
+	// skater can replay from wherever the server's skater starts.
+	if ( prediction->IsFirstTimePredicted() && m_pTFPlayer->IsLocalPlayer() && m_pTFPlayer->GetCurrentUserCommand() )
+	{
+		TFSkatePredictor().Capture( m_pTFPlayer, m_pTFPlayer->GetCurrentUserCommand() );
+	}
+#endif
+
+	// tf2-skate: the Skate 3 simulation owns position and velocity while skating.
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_SKATING ) )
+	{
+		SkateMove();
+		FinishMove();
+		return;
+	}
 
 	// Handle charging demomens
 	ChargeMove();
@@ -626,6 +646,58 @@ bool CTFGameMovement::StunMove()
 	return false;
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: tf2-skate. The server steps the player's Skate 3 skater with this
+//          usercmd; the client runs its predicted copy (c_tf_skate_predict.cpp),
+//          or, when it isn't predicting, leaves the networked origin alone and
+//          draws the server's skater from C_TFPlayer's playback buffer.
+//-----------------------------------------------------------------------------
+void CTFGameMovement::SkateMove( void )
+{
+	const CUserCmd *pCmd = m_pTFPlayer->GetCurrentUserCommand();
+	SkateInput_t input;
+	if ( pCmd )
+	{
+		SkateInputFromCmd( pCmd, input );
+	}
+	else
+	{
+		V_memset( &input, 0, sizeof( input ) );
+	}
+
+#ifdef GAME_DLL
+	// Skate has no water. Waist deep and still riding means a bail: the skater
+	// ragdolls (and keeps sinking, since water isn't solid to Skate). The
+	// predicting client guesses the same rule (CTFSkatePredictor::GuessFlags).
+	bool bWipedOut = m_pTFPlayer->m_nSkateState == SKATE_STATE_WIPEOUT;
+	if ( player->GetWaterLevel() >= WL_Waist && !bWipedOut )
+	{
+		input.nFlags |= SKATE_STEP_FORCE_WIPEOUT;
+	}
+	if ( m_pTFPlayer->m_bSkateBailNext && !bWipedOut )
+	{
+		input.nFlags |= SKATE_STEP_FORCE_WIPEOUT;	// slammed into a player
+	}
+	m_pTFPlayer->m_bSkateBailNext = false;
+	m_pTFPlayer->SkateMove( gpGlobals->frametime, input, mv );
+#else
+	SkateStepResult_t result;
+	if ( m_pTFPlayer->IsLocalPlayer() && TFSkatePredictor().Move( m_pTFPlayer, pCmd, prediction->IsFirstTimePredicted(), result ) )
+	{
+		mv->SetAbsOrigin( result.vecOrigin );
+		mv->m_vecVelocity = result.vecVelocity;
+		m_pTFPlayer->SetGroundEntity( SkateStateIsGrounded( result.nState ) ? GetClientWorldEntity() : NULL );
+	}
+#endif
+
+	// Measure water for the new position as PlayerMove would, so drowning,
+	// extinguishing and the water overlay all keep working while skating.
+	if ( m_pTFPlayer->m_Shared.InCond( TF_COND_SKATING ) )
+	{
+		CheckWater();
+	}
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 

@@ -426,6 +426,7 @@ static const char *g_aConditionNames[] =
 	"TF_COND_POWERUPMODE_DOMINANT",             // = 129
 	"TF_COND_IMMUNE_TO_PUSHBACK",				// = 130
 
+	"TF_COND_SKATING",                          // = 131
 	//
 	// ADD NEW ITEMS HERE TO AVOID BREAKING DEMOS
 	//

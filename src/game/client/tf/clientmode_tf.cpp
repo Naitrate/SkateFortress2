@@ -12,6 +12,8 @@
 #include "cbase.h"
 #include "hud.h"
 #include "clientmode_tf.h"
+#include "c_tf_skateboard.h"
+#include "tf_skate_controls.h"
 #include "cdll_client_int.h"
 #include "iinput.h"
 #include "iviewrender.h"
@@ -98,8 +100,12 @@
 #include "steam/isteamtimeline.h"
 #endif
 
+#include "inputsystem/iinputsystem.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+bool TFShoulderCameraActive();	// tf2-skate, below
 
 #if !defined(NO_STEAM)
 extern ConVar cl_steamscreenshots;
@@ -218,6 +224,38 @@ static bool TauntHandlesKeyInput( int down, ButtonCode_t keynum, const char *psz
 	return false;
 }
 
+
+// tf2-skate: while skating, TF2's gameplay binds (weapon slots and the mouse
+// wheel, voice commands like "Medic!", taunts, inspecting...) do nothing; the
+// skate controls come from their own keys (tf_skate_controls.cpp). Binds for
+// talking, menus, the scoreboard and the like still work. Only key presses
+// are blocked, so a "-" release for something held before skating still runs.
+static bool SkateHandlesKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
+{
+	static const char *s_pszAllowed[] =
+	{
+		"skate_", "shoulder_camera_", "toggleconsole", "cancelselect", "gameui", "escape", "+showscores", "showscores",
+		"say", "messagemode", "+voicerecord", "voice_", "screenshot", "jpeg", "devshots",
+		"changeclass", "changeteam", "open_charinfo", "show_", "+show", "menuselect", "quit",
+		"kill", "explode", "retry", "disconnect", "connect", "callvote", "vote", "pause", "exec",
+		"bind", "toggle", "sv_", "cl_", "net_", "mat_", "r_", "snd_", "volume", "record", "stop",
+	};
+	if ( !down || !pszCurrentBinding || !pszCurrentBinding[0] )
+		return false;
+	C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+	if ( !pPlayer || !pPlayer->IsAlive() || !pPlayer->m_Shared.InCond( TF_COND_SKATING ) )
+		return false;
+	// The first command of the bind decides ("slot1; say hi" is a weapon bind).
+	const char *pszCommand = pszCurrentBinding;
+	while ( *pszCommand == ' ' || *pszCommand == '"' )
+		++pszCommand;
+	for ( int i = 0; i < ARRAYSIZE( s_pszAllowed ); ++i )
+	{
+		if ( !V_strnicmp( pszCommand, s_pszAllowed[i], V_strlen( s_pszAllowed[i] ) ) )
+			return false;
+	}
+	return true;
+}
 
 // Sets convars to tag the current mapname and the player in your crosshairs.
 // The player tagged will be overridden for killcam shots to be the killer
@@ -549,6 +587,7 @@ void ClientModeTFNormal::LevelInit( const char *newmap )
 	BaseClass::LevelInit( newmap );
 
 	m_bInfoPanelShown = false;
+	C_TFSkateboard::LevelInitAssets();
 }
 
 IClientMode *GetClientModeNormal()
@@ -588,7 +627,11 @@ bool ClientModeTFNormal::ShouldDrawViewModel()
 	{
 		if ( pPlayer->m_Shared.InCond( TF_COND_ZOOMED ) )
 			return false;
+		if ( pPlayer->m_Shared.InCond( TF_COND_SKATING ) )
+			return false;
 	}
+	if ( TFShoulderCameraActive() )
+		return false;
 
 	if ( !r_drawviewmodel.GetBool() )
 		return false;
@@ -596,11 +639,154 @@ bool ClientModeTFNormal::ShouldDrawViewModel()
 	return true;
 }
 
+ConVar cl_skate_camera( "cl_skate_camera", "1", FCVAR_ARCHIVE, "While skating: 1 Skate 3's own camera rig, 2 over the shoulder (cl_shoulder_camera_*), 0 plain third person." );
+
+//-----------------------------------------------------------------------------
+// tf2-skate: an over-the-shoulder camera, for playing on foot
+// (cl_shoulder_camera, if the server's tf_allow_shoulder_camera allows it) and
+// for skating (cl_skate_camera 2). The camera sits behind and beside the
+// player's head and is pulled in when a wall is in the way.
+//-----------------------------------------------------------------------------
+extern ConVar tf_allow_shoulder_camera;
+ConVar cl_shoulder_camera( "cl_shoulder_camera", "0", FCVAR_ARCHIVE, "Over-the-shoulder camera while playing on foot (when the server allows it)." );
+ConVar cl_shoulder_camera_dist( "cl_shoulder_camera_dist", "70", FCVAR_ARCHIVE, "Over-the-shoulder camera: distance behind the head." );
+ConVar cl_shoulder_camera_right( "cl_shoulder_camera_right", "24", FCVAR_ARCHIVE, "Over-the-shoulder camera: distance to the side." );
+ConVar cl_shoulder_camera_up( "cl_shoulder_camera_up", "6", FCVAR_ARCHIVE, "Over-the-shoulder camera: height above the head." );
+ConVar cl_shoulder_camera_side( "cl_shoulder_camera_side", "1", FCVAR_ARCHIVE, "Over-the-shoulder camera: 1 right shoulder, -1 left (shoulder_camera_swap flips it)." );
+ConVar cl_shoulder_camera_skate_dist( "cl_shoulder_camera_skate_dist", "90", FCVAR_ARCHIVE, "Over-the-shoulder camera while skating: distance behind the head." );
+
+CON_COMMAND( shoulder_camera_toggle, "Turn the over-the-shoulder camera on or off (on foot, or while skating)." )
+{
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_SKATING ) )
+	{
+		cl_skate_camera.SetValue( cl_skate_camera.GetInt() == 2 ? 1 : 2 );
+		return;
+	}
+	cl_shoulder_camera.SetValue( !cl_shoulder_camera.GetBool() );
+	if ( cl_shoulder_camera.GetBool() && !tf_allow_shoulder_camera.GetBool() )
+	{
+		Msg( "This server doesn't allow the over-the-shoulder camera on foot (tf_allow_shoulder_camera 0).\n" );
+	}
+}
+
+CON_COMMAND( shoulder_camera_swap, "Move the over-the-shoulder camera to the other shoulder." )
+{
+	cl_shoulder_camera_side.SetValue( cl_shoulder_camera_side.GetFloat() >= 0.0f ? -1 : 1 );
+}
+
+// The on-foot over-the-shoulder camera is in use this frame: the local model
+// is drawn instead of the viewmodel (C_BasePlayer::LocalPlayerInFirstPersonView)
+// and the crosshair follows the aim (CHudCrosshair::GetDrawPosition).
+bool TFShoulderCameraActive()
+{
+	if ( !cl_shoulder_camera.GetBool() || !tf_allow_shoulder_camera.GetBool() || engine->IsPlayingDemo() )
+		return false;
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( !pPlayer || !pPlayer->IsAlive() || pPlayer->GetObserverMode() != OBS_MODE_NONE )
+		return false;
+	// Taunts, karts and skating have cameras of their own; a scope is a scope.
+	return !pPlayer->m_Shared.InCond( TF_COND_SKATING ) && !pPlayer->m_Shared.InCond( TF_COND_TAUNTING )
+		&& !pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_KART ) && !pPlayer->m_Shared.InCond( TF_COND_ZOOMED )
+		&& !pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_THRILLER ) && !::input->CAM_IsThirdPerson();
+}
+
+// Behind and beside `vecPivot` looking along `angView`, pulled in front of
+// any wall between. Pulls in at once, eases back out, and swaps shoulders
+// smoothly.
+static Vector ShoulderCameraOrigin( C_BasePlayer *pPlayer, const Vector &vecPivot, const QAngle &angView, float flDist )
+{
+	static float s_flFraction = 1.0f;
+	static float s_flSide = 1.0f;
+	float flBlend = 1.0f - expf( -10.0f * gpGlobals->frametime );
+	float flWantSide = cl_shoulder_camera_side.GetFloat() >= 0.0f ? 1.0f : -1.0f;
+	s_flSide = Lerp( flBlend, s_flSide, flWantSide );
+
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( angView, &vecForward, &vecRight, &vecUp );
+	Vector vecWant = vecPivot - vecForward * flDist + vecRight * ( cl_shoulder_camera_right.GetFloat() * s_flSide ) + vecUp * cl_shoulder_camera_up.GetFloat();
+
+	trace_t tr;
+	CTraceFilterSimple filter( pPlayer, COLLISION_GROUP_NONE );
+	UTIL_TraceHull( vecPivot, vecWant, Vector( -6, -6, -6 ), Vector( 6, 6, 6 ), MASK_SOLID & ~CONTENTS_MONSTER, &filter, &tr );
+	s_flFraction = tr.fraction < s_flFraction ? tr.fraction : Lerp( flBlend, s_flFraction, tr.fraction );
+	return vecPivot + ( vecWant - vecPivot ) * s_flFraction;
+}
+ConVar cl_skate_camera_smoothing( "cl_skate_camera_smoothing", "0", FCVAR_ARCHIVE, "Extra smoothing rate (per second) on top of interpolation; 0 follows the interpolated Skate camera exactly." );
+
+//-----------------------------------------------------------------------------
+// Purpose: tf2-skate. The sidecar's camera arrives at network rate, relative to
+//          the player origin; follow it smoothly on top of the interpolated origin.
+//-----------------------------------------------------------------------------
+void ClientModeTFNormal::OverrideView( CViewSetup *pSetup )
+{
+	BaseClass::OverrideView( pSetup );
+
+	static bool s_bWasSkating = false;
+	static Vector s_vecOffset;
+	static QAngle s_angView;
+
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( TFShoulderCameraActive() )
+	{
+		// The eyes stay where shots come from; the camera moves back from them.
+		pSetup->origin = ShoulderCameraOrigin( pPlayer, pSetup->origin, pSetup->angles, cl_shoulder_camera_dist.GetFloat() );
+		s_bWasSkating = false;
+		return;
+	}
+
+	bool bSkating = pPlayer && pPlayer->IsAlive() && pPlayer->m_Shared.InCond( TF_COND_SKATING ) && cl_skate_camera.GetBool()
+		&& pPlayer->GetSkateCameraOffset().LengthSqr() > 1.0f;
+	if ( !bSkating )
+	{
+		s_bWasSkating = false;
+		return;
+	}
+
+	const Vector &vecTarget = pPlayer->GetSkateCameraOffset();
+	const QAngle &angTarget = pPlayer->GetSkateCameraAngles();
+	if ( !s_bWasSkating || cl_skate_camera_smoothing.GetFloat() <= 0.0f )
+	{
+		s_vecOffset = vecTarget;
+		s_angView = angTarget;
+		s_bWasSkating = true;
+	}
+	else
+	{
+		float flBlend = 1.0f - expf( -cl_skate_camera_smoothing.GetFloat() * gpGlobals->frametime );
+		s_vecOffset = Lerp( flBlend, s_vecOffset, vecTarget );
+		for ( int i = 0; i < 3; ++i )
+		{
+			s_angView[i] = ApproachAngle( angTarget[i], s_angView[i], fabsf( AngleDiff( angTarget[i], s_angView[i] ) ) * flBlend );
+		}
+	}
+
+	if ( cl_skate_camera.GetInt() == 2 )
+	{
+		// Over the shoulder: Skate's camera direction, from just behind the
+		// skater's head (wherever it is: crouched, flipping or bailing).
+		const Vector *pJoints = pPlayer->GetSkateJoints();
+		matrix3x4_t rootToWorld;
+		AngleMatrix( pPlayer->GetSkateBodyAngles(), pPlayer->GetAbsOrigin(), rootToWorld );
+		Vector vecHead;
+		VectorTransform( pJoints[ SKATE_JOINT_HEAD ], rootToWorld, vecHead );
+		pSetup->origin = ShoulderCameraOrigin( pPlayer, vecHead, s_angView, cl_shoulder_camera_skate_dist.GetFloat() );
+		pSetup->angles = s_angView;
+		return;
+	}
+
+	pSetup->origin = pPlayer->GetAbsOrigin() + s_vecOffset;
+	pSetup->angles = s_angView;
+}
+
 ConVar tf_hud_no_crosshair_on_scope_zoom( "tf_hud_no_crosshair_on_scope_zoom", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE );
 
 bool ClientModeTFNormal::ShouldDrawCrosshair()
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_SKATING ) )
+		return false;
+
 	if ( !pPlayer )
 		return false;
 
@@ -1448,9 +1634,79 @@ void ClientModeTFNormal::PostRenderVGui()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// tf2-skate: game controller -> Skate's virtual Xbox pad.
+//
+// While skating with a controller, the raw sticks and buttons replace TF2's
+// own joystick handling in the usercmd: left stick in forward/sidemove, right
+// stick (absolute, up positive) in mousedx/mousedy, buttons as the same IN_
+// bits the keyboard uses, and IN_BULLRUSH (unused by TF2) marks "pad mode" so
+// the sidecar treats mousedx/dy as a stick position instead of mouse motion.
+//-----------------------------------------------------------------------------
+ConVar cl_skate_pad( "cl_skate_pad", "1", FCVAR_ARCHIVE, "Use a game controller's raw sticks and buttons while skating (needs joystick 1)." );
+ConVar cl_skate_pad_axes( "cl_skate_pad_axes", "0 1 3 5", FCVAR_ARCHIVE, "Joystick axis indices for left X, left Y, right X, right Y. Find yours with skate_pad_debug." );
+
+static int SkatePadAxis( int nIndex )
+{
+	int nAxes[4] = { 0, 1, 3, 5 };
+	sscanf( cl_skate_pad_axes.GetString(), "%d %d %d %d", &nAxes[0], &nAxes[1], &nAxes[2], &nAxes[3] );
+	int nAxis = clamp( nAxes[ nIndex ], 0, MAX_JOYSTICK_AXES - 1 );
+	return inputsystem->GetAnalogValue( JOYSTICK_AXIS( 0, nAxis ) );
+}
+
+CON_COMMAND( skate_pad_debug, "Print raw controller axes and buttons (move a stick while running it)." )
+{
+	Msg( "joysticks: %d\n", inputsystem->GetJoystickCount() );
+	for ( int i = 0; i < MAX_JOYSTICK_AXES; ++i )
+	{
+		Msg( "  axis %d: %6d\n", i, inputsystem->GetAnalogValue( JOYSTICK_AXIS( 0, i ) ) );
+	}
+	Msg( "  mapped (cl_skate_pad_axes \"%s\"): LX %d LY %d RX %d RY %d\n", cl_skate_pad_axes.GetString(),
+		SkatePadAxis( 0 ), SkatePadAxis( 1 ), SkatePadAxis( 2 ), SkatePadAxis( 3 ) );
+}
+
+static void SkateApplyPad( CUserCmd *cmd )
+{
+	static float s_flLastActivity = -1000.0f;
+	if ( !cl_skate_pad.GetBool() || !inputsystem || inputsystem->GetJoystickCount() <= 0 )
+		return;
+
+	// Buttons as remapped in the Skate 3 controls (tf_skate_controls.cpp).
+	int nButtons = SkateControlsPadButtons();
+	int nClear = IN_BULLRUSH | SkateControlsAllButtons();
+	int nAxes[4];
+	for ( int i = 0; i < 4; ++i )
+	{
+		nAxes[i] = SkatePadAxis( i );
+	}
+
+	// Only take over while the pad is actually being used, so a connected but
+	// idle controller doesn't disable mouse flicks.
+	const int nActive = 9000;
+	if ( nButtons || abs( nAxes[0] ) > nActive || abs( nAxes[1] ) > nActive || abs( nAxes[2] ) > nActive || abs( nAxes[3] ) > nActive )
+	{
+		s_flLastActivity = gpGlobals->realtime;
+	}
+	if ( gpGlobals->realtime - s_flLastActivity > 3.0f )
+		return;
+
+	cmd->buttons = ( cmd->buttons & ~nClear ) | nButtons | IN_BULLRUSH;
+	cmd->forwardmove = -nAxes[1] / 32768.0f * 450.0f;
+	cmd->sidemove = nAxes[0] / 32768.0f * 450.0f;
+	cmd->mousedx = clamp( nAxes[2], -32767, 32767 );
+	cmd->mousedy = clamp( -nAxes[3], -32767, 32767 );
+}
+
 bool ClientModeTFNormal::CreateMove( float flInputSampleTime, CUserCmd *cmd )
 {
-	return BaseClass::CreateMove( flInputSampleTime, cmd );
+	bool bResult = BaseClass::CreateMove( flInputSampleTime, cmd );
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_SKATING ) )
+	{
+		SkateControlsApplyKeys( cmd );	// keyboard / mouse skate keys
+		SkateApplyPad( cmd );			// a controller in use overrides them
+	}
+	return bResult;
 }
 
 //-----------------------------------------------------------------------------
@@ -1494,6 +1750,11 @@ int	ClientModeTFNormal::HudElementKeyInput( int down, ButtonCode_t keynum, const
 	}
 
 	if ( TauntHandlesKeyInput( down, keynum, pszCurrentBinding ) )
+	{
+		return 0;
+	}
+
+	if ( SkateHandlesKeyInput( down, keynum, pszCurrentBinding ) )
 	{
 		return 0;
 	}

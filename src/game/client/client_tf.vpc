@@ -281,6 +281,14 @@ $Project "Client (TF)"
 			$File	"tf\c_tf_objective_resource.cpp"
 			$File	"tf\c_tf_objective_resource.h"
 			$File	"tf\c_tf_player.cpp"
+			$File	"tf\c_tf_skateboard.cpp"
+			$File	"tf\tf_hud_skate_tricks.cpp"
+			$File	"tf\tf_skate_setup_dialog.cpp"
+			$File	"tf\tf_skate_controls.cpp"
+			$File	"tf\tf_skate_controls.h"
+			$File	"tf\c_tf_skate_predict.cpp"
+			$File	"tf\c_tf_skate_predict.h"
+			$File	"tf\c_tf_skateboard.h"
 			$File	"tf\c_tf_player.h"
 			$File	"tf\c_tf_playerclass.h"
 			$File	"tf\c_tf_playerresource.cpp"
@@ -502,6 +510,20 @@ $Project "Client (TF)"
 			$File	"$SRCDIR\game\shared\tf\tf_condition.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_condition.h"
 			$File	"$SRCDIR\game\shared\tf\tf_player_shared.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_skate_pose.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_skate_sidecar.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_skate_sidecar.h"
+			$File	"$SRCDIR\game\shared\tf\tf_skate_library.cpp"
+			{
+				$Configuration
+				{
+					$Compiler
+					{
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+					}
+				}
+			}
+			$File	"$SRCDIR\game\shared\tf\tf_skate_library.h"
 			$File	"$SRCDIR\game\shared\tf\tf_player_shared.h"
 			$File	"$SRCDIR\game\shared\tf\tf_playeranimstate.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_playeranimstate.h"

@@ -1818,6 +1818,10 @@ void CTFPlayerShared::OnConditionAdded( ETFCond eCond )
 	case TF_COND_HALLOWEEN_KART:
 		OnAddHalloweenKart();
 		break;
+
+	case TF_COND_SKATING:
+		OnAddSkating();
+		break;
 		
 	case TF_COND_BALLOON_HEAD:
 		OnAddBalloonHead();
@@ -2146,6 +2150,10 @@ void CTFPlayerShared::OnConditionRemoved( ETFCond eCond )
 		
 	case TF_COND_HALLOWEEN_KART:
 		OnRemoveHalloweenKart();
+		break;
+
+	case TF_COND_SKATING:
+		OnRemoveSkating();
 		break;
 		
 	case TF_COND_BALLOON_HEAD:
@@ -5532,6 +5540,43 @@ void CTFPlayerShared::OnAddHalloweenKart( void )
 	if ( m_pOuter->GetActiveWeapon() )
 	{
 		m_pOuter->GetActiveWeapon()->SetWeaponVisible( false );
+	}
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: tf2-skate. The server spawned the sidecar skater before adding this.
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::OnAddSkating( void )
+{
+#ifdef CLIENT_DLL
+	m_pOuter->ResetSkatePlayback();
+	m_pOuter->CreateSkateboard();
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		m_pOuter->SetSkateCamera( true );
+	}
+	if ( m_pOuter->GetActiveWeapon() )
+	{
+		m_pOuter->GetActiveWeapon()->SetWeaponVisible( false );
+	}
+#endif
+}
+
+void CTFPlayerShared::OnRemoveSkating( void )
+{
+#ifdef GAME_DLL
+	m_pOuter->StopSkating();
+#else
+	m_pOuter->RemoveSkateboard();
+	m_pOuter->ResetSkatePlayback();
+	if ( m_pOuter->IsLocalPlayer() )
+	{
+		m_pOuter->SetSkateCamera( false );
+	}
+	if ( m_pOuter->GetActiveWeapon() )
+	{
+		m_pOuter->GetActiveWeapon()->SetWeaponVisible( true );
 	}
 #endif
 }
@@ -12216,6 +12261,10 @@ bool CTFPlayer::CanAttack( int iCanAttackFlags )
 
 	Assert( pRules );
 
+	// Attack buttons are grab triggers while skating.
+	if ( m_Shared.InCond( TF_COND_SKATING ) )
+		return false;
+
 	if ( IsViewingCYOAPDA() )
 		return false;
 
@@ -12827,6 +12876,10 @@ bool CTFPlayer::Weapon_CanSwitchTo( CBaseCombatWeapon *pWeapon )
 
 void CTFPlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, float fvol, bool force )
 {
+	// tf2-skate: on the board the wheels make the noise, not the shoes.
+	if ( m_Shared.InCond( TF_COND_SKATING ) )
+		return;
+
 #ifdef CLIENT_DLL
 	// Don't make predicted footstep sounds in third person, animevents will take care of that.
 	if ( prediction->InPrediction() && C_BasePlayer::ShouldDrawLocalPlayer() )

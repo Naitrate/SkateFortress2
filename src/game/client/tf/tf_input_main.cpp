@@ -153,7 +153,14 @@ ConVar tf_halloween_kart_cam_follow( "tf_halloween_kart_cam_follow", "0.3f", FCV
 void CTFInput::ApplyMouse( QAngle& viewangles, CUserCmd *cmd, float mouse_x, float mouse_y )
 {
 	CTFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
+	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_SKATING ) )
+	{
+		// tf2-skate: mouse motion is the right stick (flick-it); the sidecar
+		// reads it from the usercmd. The Skate camera rig owns the view.
+		cmd->mousedx = (int)mouse_x;
+		cmd->mousedy = (int)mouse_y;
+	}
+	else if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
 	{
 		// Make the camera drift a little behind the car
 		float flDelta = pPlayer->GetTauntYaw() - m_angThirdPersonOffset[YAW];

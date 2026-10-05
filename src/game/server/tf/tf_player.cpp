@@ -7,6 +7,8 @@
 
 #include "cbase.h"
 #include "tf_player.h"
+#include "tf_skate_sidecar.h"
+#include "tf_bot_skate.h"
 #include "tf_gamerules.h"
 #include "tf_gamestats.h"
 #include "KeyValues.h"
@@ -740,6 +742,26 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayer, DT_TFLocalPlayerExclusive )
 	SendPropInt( SENDINFO( m_nExperienceLevelProgress ), 7, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bMatchSafeToLeave ) ),
 
+	SendPropVector( SENDINFO( m_vecSkateCameraOffset ), -1, SPROP_COORD | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nSkateTrickSeq ), -1, SPROP_VARINT ),
+	SendPropString( SENDINFO( m_szSkateTrick ) ),
+	SendPropInt( SENDINFO( m_nSkateTrickScore ), -1, SPROP_VARINT ),
+	SendPropInt( SENDINFO( m_nSkateLineScore ), -1, SPROP_VARINT ),
+	SendPropFloat( SENDINFO( m_flSkateMultiplier ), 8, 0, 0.0f, 16.0f ),
+	SendPropInt( SENDINFO( m_nSkateTotalScore ), -1, SPROP_VARINT ),
+	SendPropInt( SENDINFO( m_nSkateScoreFlags ), 4, SPROP_UNSIGNED ),
+	SendPropQAngles( SENDINFO( m_angSkateCamera ), 13, SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nSkateSpawnSerial ), -1, SPROP_VARINT ),
+	SendPropVector( SENDINFO( m_vecSkateSpawnOrigin ), -1, SPROP_NOSCALE ),
+	SendPropFloat( SENDINFO( m_flSkateSpawnYaw ), -1, SPROP_NOSCALE ),
+	SendPropString( SENDINFO( m_szSkateDifficulty ) ),
+	SendPropInt( SENDINFO( m_nSkateWorldCRC ), 32, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nSkateStartCmd ), -1, SPROP_VARINT ),
+	SendPropInt( SENDINFO( m_nSkateAckCmd ), -1, SPROP_VARINT | SPROP_CHANGES_OFTEN ),
+	SendPropInt( SENDINFO( m_nSkateFlagCount ), -1, SPROP_VARINT ),
+	SendPropArray3( SENDINFO_ARRAY3( m_nSkateFlagCmd ), SendPropInt( SENDINFO_ARRAY( m_nSkateFlagCmd ), -1, SPROP_VARINT ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_nSkateFlagBits ), SendPropInt( SENDINFO_ARRAY( m_nSkateFlagBits ), 4, SPROP_UNSIGNED ) ),
+
 END_SEND_TABLE()
 
 // all players except the local player
@@ -833,6 +855,13 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropDataTable( "TFSendHealersDataTable", 0, &REFERENCE_SEND_TABLE( DT_TFSendHealersDataTable ), SendProxy_SendHealersDataTable ),
 
 	SendPropFloat( SENDINFO( m_flKartNextAvailableBoost ) ),
+	SendPropInt( SENDINFO( m_nSkateState ), 10, SPROP_UNSIGNED ),
+	SendPropQAngles( SENDINFO( m_angSkateBody ), 13, SPROP_CHANGES_OFTEN ),
+	SendPropVector( SENDINFO( m_vecSkateDeckOffset ), -1, SPROP_COORD | SPROP_CHANGES_OFTEN ),
+	SendPropQAngles( SENDINFO( m_angSkateDeck ), 13, SPROP_CHANGES_OFTEN ),
+	SendPropVector( SENDINFO( m_vecSkateOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
+	SendPropFloat( SENDINFO( m_flSkateTime ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
+	SendPropArray3( SENDINFO_ARRAY3( m_vecSkateJoints ), SendPropVector( SENDINFO_ARRAY( m_vecSkateJoints ), SKATE_JOINT_BITS, SPROP_CHANGES_OFTEN, -SKATE_JOINT_RANGE, SKATE_JOINT_RANGE ) ),
 	SendPropInt( SENDINFO( m_iKartHealth ) ),
 	SendPropInt( SENDINFO( m_iKartState ) ),
 	SendPropEHandle( SENDINFO( m_hGrapplingHookTarget ) ),
@@ -2243,6 +2272,12 @@ void CTFPlayer::PreThink()
 	// Update timers.
 	UpdateTimers();
 
+	// tf2-skate: skating bots that hopped off to get unstuck climb back on.
+	if ( IsBot() )
+	{
+		TFBotSkateThink( this );
+	}
+
 	// Pass through to the base class think.
 	BaseClass::PreThink();
 
@@ -3135,6 +3170,10 @@ void CTFPlayer::PrecacheTFPlayer()
 void CTFPlayer::Precache()
 {
 	VPROF_BUDGET( "CTFPlayer::Precache", VPROF_BUDGETGROUP_PLAYER );
+
+	// tf2-skate: skater collisions and head stomps (tf_player_skate.cpp).
+	PrecacheScriptSound( "Weapon_Mantreads.Impact" );
+	PrecacheScriptSound( "Flesh.ImpactHard" );
 	
 	/*
 	Note: All TFPlayer specific must go inside PrecacheTFPlayer()
@@ -3564,6 +3603,10 @@ void CTFPlayer::Spawn()
 {
 	VPROF_BUDGET( "CTFPlayer::Spawn", VPROF_BUDGETGROUP_PLAYER );
 	MDLCACHE_CRITICAL_SECTION();
+
+	// Hand the map to the skate sidecar now (once per map) rather than on the
+	// first skate_toggle, which would hitch mid-game.
+	TFSkateSidecar().Prepare();
 
 	m_bIsABot = IsBot();
 
@@ -7193,6 +7236,25 @@ bool CTFPlayer::ClientCommand( const CCommand &args )
 	const char *pcmd = args[0];
 	
 	m_flLastAction = gpGlobals->curtime;
+
+	// tf2-skate: "bind <key> skate_toggle". Unknown client commands are
+	// forwarded to the server, so the client needs no matching ConCommand.
+	if ( FStrEq( pcmd, "skate_toggle" ) )
+	{
+		if ( m_Shared.InCond( TF_COND_SKATING ) )
+		{
+			m_Shared.RemoveCond( TF_COND_SKATING );
+		}
+		else
+		{
+			char szError[ 512 ];
+			if ( !StartSkating( szError, sizeof( szError ) ) )
+			{
+				ClientPrint( this, HUD_PRINTTALK, UTIL_VarArgs( "[skate] %s", szError ) );
+			}
+		}
+		return true;
+	}
 
 	if ( FStrEq( pcmd, "addcond" ) )
 	{

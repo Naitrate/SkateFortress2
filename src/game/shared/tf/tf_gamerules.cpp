@@ -669,6 +669,10 @@ extern ConVar tf_vaccinator_uber_resist;
 extern ConVar tf_teleporter_fov_time;
 extern ConVar tf_teleporter_fov_start;
 
+// tf2-skate: lets players use the over-the-shoulder camera (clientmode_tf.cpp)
+// on foot. Seeing past corners is an advantage, so servers can turn it off.
+ConVar tf_allow_shoulder_camera( "tf_allow_shoulder_camera", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow players' over-the-shoulder camera while not skating (cl_shoulder_camera)." );
+
 #ifdef GAME_DLL
 extern ConVar mp_holiday_nogifts;
 extern ConVar tf_debug_damage;

@@ -6,6 +6,9 @@
 
 #include "cbase.h"
 #include "c_tf_player.h"
+#include "c_tf_skateboard.h"
+#include "c_tf_skate_predict.h"
+#include "tf_skate_pose.h"
 #include "c_user_message_register.h"
 #include "view.h"
 #include "iclientvehicle.h"
@@ -3754,6 +3757,26 @@ BEGIN_RECV_TABLE_NOBASE( C_TFPlayer, DT_TFLocalPlayerExclusive )
 	RecvPropInt( RECVINFO( m_nExperienceLevelProgress ) ),
 	RecvPropInt( RECVINFO( m_bMatchSafeToLeave ) ),
 
+	RecvPropVector( RECVINFO( m_vecSkateCameraOffset ) ),
+	RecvPropInt( RECVINFO( m_nSkateTrickSeq ) ),
+	RecvPropString( RECVINFO( m_szSkateTrick ) ),
+	RecvPropInt( RECVINFO( m_nSkateTrickScore ) ),
+	RecvPropInt( RECVINFO( m_nSkateLineScore ) ),
+	RecvPropFloat( RECVINFO( m_flSkateMultiplier ) ),
+	RecvPropInt( RECVINFO( m_nSkateTotalScore ) ),
+	RecvPropInt( RECVINFO( m_nSkateScoreFlags ) ),
+	RecvPropQAngles( RECVINFO( m_angSkateCamera ) ),
+	RecvPropInt( RECVINFO( m_nSkateSpawnSerial ) ),
+	RecvPropVector( RECVINFO( m_vecSkateSpawnOrigin ) ),
+	RecvPropFloat( RECVINFO( m_flSkateSpawnYaw ) ),
+	RecvPropString( RECVINFO( m_szSkateDifficulty ) ),
+	RecvPropInt( RECVINFO( m_nSkateWorldCRC ) ),
+	RecvPropInt( RECVINFO( m_nSkateStartCmd ) ),
+	RecvPropInt( RECVINFO( m_nSkateAckCmd ) ),
+	RecvPropInt( RECVINFO( m_nSkateFlagCount ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_nSkateFlagCmd ), RecvPropInt( RECVINFO( m_nSkateFlagCmd[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_nSkateFlagBits ), RecvPropInt( RECVINFO( m_nSkateFlagBits[0] ) ) ),
+
 END_RECV_TABLE()
 
 // all players except the local player
@@ -3822,6 +3845,13 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 
 	RecvPropDataTable("TFSendHealersDataTable", 0, 0, &REFERENCE_RECV_TABLE( DT_TFSendHealersDataTable ) ),
 	RecvPropFloat( RECVINFO( m_flKartNextAvailableBoost ) ),
+	RecvPropInt( RECVINFO( m_nSkateState ) ),
+	RecvPropQAngles( RECVINFO( m_angSkateBody ) ),
+	RecvPropVector( RECVINFO( m_vecSkateDeckOffset ) ),
+	RecvPropQAngles( RECVINFO( m_angSkateDeck ) ),
+	RecvPropVector( RECVINFO( m_vecSkateOrigin ) ),
+	RecvPropFloat( RECVINFO( m_flSkateTime ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_vecSkateJoints ), RecvPropVector( RECVINFO( m_vecSkateJoints[0] ) ) ),
 	RecvPropInt( RECVINFO( m_iKartHealth ) ),
 	RecvPropInt( RECVINFO( m_iKartState ) ),
 	RecvPropEHandle( RECVINFO( m_hGrapplingHookTarget ) ),
@@ -3862,6 +3892,15 @@ END_PREDICTION_DATA()
 
 C_TFPlayer::C_TFPlayer() : 
 	m_iv_angEyeAngles( "C_TFPlayer::m_iv_angEyeAngles" ),
+	// tf2-skate: unique names matter. C_TFRagdoll::Interp_Copy pairs
+	// variables by debug name, and the default "no debug name" would copy
+	// these over unrelated ragdoll variables (crash on death while skating).
+	m_iv_angSkateBody( "C_TFPlayer::m_iv_angSkateBody" ),
+	m_iv_vecSkateDeckOffset( "C_TFPlayer::m_iv_vecSkateDeckOffset" ),
+	m_iv_angSkateDeck( "C_TFPlayer::m_iv_angSkateDeck" ),
+	m_iv_vecSkateCameraOffset( "C_TFPlayer::m_iv_vecSkateCameraOffset" ),
+	m_iv_angSkateCamera( "C_TFPlayer::m_iv_angSkateCamera" ),
+	m_iv_vecSkateJoints( "C_TFPlayer::m_iv_vecSkateJoints" ),
 	m_mapOverheadEffects( DefLessFunc( const char * ) )
 {
 	m_pAttributes = this;
@@ -3872,6 +3911,31 @@ C_TFPlayer::C_TFPlayer() :
 	m_iIDEntIndex = 0;
 
 	AddVar( &m_angEyeAngles, &m_iv_angEyeAngles, LATCH_SIMULATION_VAR );
+	// tf2-skate: smooth the 66 Hz skate pose between snapshots.
+	AddVar( &m_angSkateBody, &m_iv_angSkateBody, LATCH_SIMULATION_VAR );
+	AddVar( &m_vecSkateDeckOffset, &m_iv_vecSkateDeckOffset, LATCH_SIMULATION_VAR );
+	AddVar( &m_angSkateDeck, &m_iv_angSkateDeck, LATCH_SIMULATION_VAR );
+	AddVar( &m_vecSkateCameraOffset, &m_iv_vecSkateCameraOffset, LATCH_SIMULATION_VAR );
+	AddVar( &m_angSkateCamera, &m_iv_angSkateCamera, LATCH_SIMULATION_VAR );
+	AddVar( m_vecSkateJoints, &m_iv_vecSkateJoints, LATCH_SIMULATION_VAR );
+	memset( m_vecSkateJoints, 0, sizeof( m_vecSkateJoints ) );
+	m_vecSkateOrigin.Init();
+	m_flSkateTime = 0.0f;
+	m_nSkateTrickSeq = 0;
+	m_szSkateTrick[0] = '\0';
+	m_nSkateTrickScore = m_nSkateLineScore = m_nSkateTotalScore = m_nSkateScoreFlags = 0;
+	m_flSkateMultiplier = 1.0f;
+	m_nSkateSamples = 0;
+	m_bSkatePlayback = false;
+	m_bSkatePredicted = false;
+	m_nSkatePredictedState = 0;
+	m_nSkateSpawnSerial = 0;
+	m_vecSkateSpawnOrigin.Init();
+	m_flSkateSpawnYaw = 0.0f;
+	m_szSkateDifficulty[0] = '\0';
+	m_nSkateWorldCRC = m_nSkateStartCmd = m_nSkateAckCmd = m_nSkateFlagCount = 0;
+	V_memset( m_nSkateFlagCmd, 0, sizeof( m_nSkateFlagCmd ) );
+	V_memset( m_nSkateFlagBits, 0, sizeof( m_nSkateFlagBits ) );
 
 	memset( m_pKartParticles, NULL, sizeof( m_pKartParticles ) );
 	memset( m_pKartSounds, NULL, sizeof( m_pKartSounds ) );
@@ -4002,6 +4066,13 @@ C_TFPlayer::C_TFPlayer() :
 	m_eDisplayingRuneIcon = RUNE_NONE;
 
 	m_pKart = NULL;
+	m_pSkateboard = NULL;
+	m_nSkateState = 0;
+	m_angSkateBody.Init();
+	m_vecSkateDeckOffset.Init();
+	m_angSkateDeck.Init();
+	m_vecSkateCameraOffset.Init();
+	m_angSkateCamera.Init();
 	m_iOldKartHealth = 0;
 
 	m_bUsingActionSlot = false;
@@ -4045,6 +4116,7 @@ C_TFPlayer::C_TFPlayer() :
 
 C_TFPlayer::~C_TFPlayer()
 {
+	RemoveSkateboard();
 	ShowNemesisIcon( false );
 	ShowDuelingIcon( false );
 	m_PlayerAnimState->Release();
@@ -4162,6 +4234,11 @@ const QAngle& C_TFPlayer::GetRenderAngles()
 	if ( IsRagdoll() )
 	{
 		return vec3_angle;
+	}
+	else if ( m_Shared.InCond( TF_COND_SKATING ) )
+	{
+		// The skater's whole body follows the simulated root, including lean.
+		return GetSkateBodyAngles();
 	}
 	else
 	{
@@ -4415,6 +4492,11 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 	SetNetworkAngles( GetLocalAngles() );
 	
 	BaseClass::OnDataChanged( updateType );
+
+	if ( IsLocalPlayer() && m_Shared.InCond( TF_COND_SKATING ) )
+	{
+		RecordSkateSample();
+	}
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
@@ -5949,6 +6031,11 @@ void C_TFPlayer::ClientThink()
 {
 	// Pass on through to the base class.
 	BaseClass::ClientThink();
+
+	if ( IsLocalPlayer() )
+	{
+		TFSkatePredictor().Update( this );
+	}
 
 	UpdateIDTarget();
 
@@ -8274,6 +8361,179 @@ void C_TFPlayer::StopTauntWithMeEffect()
 
 
 //-----------------------------------------------------------------------------
+// tf2-skate: local skater playback buffer (see SkateSample_t).
+//-----------------------------------------------------------------------------
+ConVar cl_skate_interp( "cl_skate_interp", "0.05", FCVAR_ARCHIVE, "Seconds the local skater is played back behind the newest server snapshot." );
+
+void C_TFPlayer::ResetSkatePlayback()
+{
+	m_nSkateSamples = 0;
+	m_bSkatePlayback = false;
+	m_EntClientFlags &= ~ENTCLIENTFLAG_ALWAYS_INTERPOLATE;
+}
+
+void C_TFPlayer::RecordSkateSample()
+{
+	if ( m_flSkateTime <= 0.0f )
+		return;
+	if ( m_nSkateSamples > 0 && m_SkateSamples[ m_nSkateSamples - 1 ].flServerTime >= m_flSkateTime )
+	{
+		// Same or older step (repeated snapshot, or a map/round reset).
+		if ( m_SkateSamples[ m_nSkateSamples - 1 ].flServerTime == m_flSkateTime )
+			return;
+		m_nSkateSamples = 0;
+	}
+	if ( m_nSkateSamples == SKATE_SAMPLES )
+	{
+		memmove( m_SkateSamples, m_SkateSamples + 1, sizeof( SkateSample_t ) * ( SKATE_SAMPLES - 1 ) );
+		--m_nSkateSamples;
+	}
+	SkateSample_t &sample = m_SkateSamples[ m_nSkateSamples++ ];
+	sample.flServerTime = m_flSkateTime;
+	sample.flArrival = Plat_FloatTime();
+	sample.vecOrigin = m_vecSkateOrigin;
+	sample.angBody = m_angSkateBody;
+	sample.vecDeckOffset = m_vecSkateDeckOffset;
+	sample.angDeck = m_angSkateDeck;
+	sample.vecCameraOffset = m_vecSkateCameraOffset;
+	sample.angCamera = m_angSkateCamera;
+	V_memcpy( sample.vecJoints, m_vecSkateJoints, sizeof( sample.vecJoints ) );
+	// Keep the interpolation pass running every frame while we skate.
+	m_EntClientFlags |= ENTCLIENTFLAG_ALWAYS_INTERPOLATE;
+}
+
+static void SkateLerpAngles( const QAngle &a, const QAngle &b, float t, QAngle &out )
+{
+	for ( int i = 0; i < 3; ++i )
+	{
+		out[i] = a[i] + AngleDiff( b[i], a[i] ) * t;
+	}
+}
+
+void C_TFPlayer::UpdateSkatePlayback()
+{
+	if ( m_nSkateSamples == 0 )
+	{
+		m_bSkatePlayback = false;
+		return;
+	}
+
+	// Map server time onto the local clock with the smallest observed transit
+	// time (least delayed snapshot), then play back cl_skate_interp behind it.
+	double flOffset = m_SkateSamples[0].flArrival - m_SkateSamples[0].flServerTime;
+	for ( int i = 1; i < m_nSkateSamples; ++i )
+	{
+		flOffset = MIN( flOffset, m_SkateSamples[i].flArrival - m_SkateSamples[i].flServerTime );
+	}
+	double flTarget = Plat_FloatTime() - flOffset - cl_skate_interp.GetFloat();
+
+	int nNext = 0;
+	while ( nNext < m_nSkateSamples && m_SkateSamples[ nNext ].flServerTime < flTarget )
+	{
+		++nNext;
+	}
+	if ( nNext == 0 || nNext == m_nSkateSamples )
+	{
+		m_SkatePlayback = m_SkateSamples[ nNext == 0 ? 0 : m_nSkateSamples - 1 ];
+	}
+	else
+	{
+		const SkateSample_t &a = m_SkateSamples[ nNext - 1 ];
+		const SkateSample_t &b = m_SkateSamples[ nNext ];
+		float t = clamp( (float)( ( flTarget - a.flServerTime ) / ( b.flServerTime - a.flServerTime ) ), 0.0f, 1.0f );
+		m_SkatePlayback.vecOrigin = Lerp( t, a.vecOrigin, b.vecOrigin );
+		SkateLerpAngles( a.angBody, b.angBody, t, m_SkatePlayback.angBody );
+		m_SkatePlayback.vecDeckOffset = Lerp( t, a.vecDeckOffset, b.vecDeckOffset );
+		SkateLerpAngles( a.angDeck, b.angDeck, t, m_SkatePlayback.angDeck );
+		m_SkatePlayback.vecCameraOffset = Lerp( t, a.vecCameraOffset, b.vecCameraOffset );
+		SkateLerpAngles( a.angCamera, b.angCamera, t, m_SkatePlayback.angCamera );
+		for ( int j = 0; j < SKATE_JOINT_COUNT; ++j )
+		{
+			m_SkatePlayback.vecJoints[j] = Lerp( t, a.vecJoints[j], b.vecJoints[j] );
+		}
+	}
+	m_bSkatePlayback = true;
+}
+
+bool C_TFPlayer::Interpolate( float currentTime )
+{
+	bool bResult = BaseClass::Interpolate( currentTime );
+	m_bSkatePredicted = false;
+	if ( IsLocalPlayer() && m_Shared.InCond( TF_COND_SKATING ) && IsAlive() )
+	{
+		// Our own predicted skater when there is one; otherwise the server's,
+		// played back from the snapshot buffer.
+		SkateStepResult_t predicted;
+		if ( TFSkatePredictor().GetRenderState( predicted ) )
+		{
+			m_SkatePlayback.vecOrigin = predicted.vecOrigin;
+			m_SkatePlayback.angBody = predicted.angBody;
+			m_SkatePlayback.vecDeckOffset = predicted.vecDeckOrigin - predicted.vecOrigin;
+			m_SkatePlayback.angDeck = predicted.angDeck;
+			if ( predicted.flCameraFov > 0.0f )
+			{
+				m_SkatePlayback.vecCameraOffset = predicted.vecCameraOrigin - predicted.vecOrigin;
+				m_SkatePlayback.angCamera = predicted.angCamera;
+			}
+			V_memcpy( m_SkatePlayback.vecJoints, predicted.vecJoints, sizeof( m_SkatePlayback.vecJoints ) );
+			m_nSkatePredictedState = predicted.nState;
+			m_bSkatePlayback = true;
+			m_bSkatePredicted = true;
+		}
+		else
+		{
+			UpdateSkatePlayback();
+		}
+		if ( m_bSkatePlayback )
+		{
+			SetAbsOrigin( m_SkatePlayback.vecOrigin );
+		}
+	}
+	else if ( m_bSkatePlayback || m_nSkateSamples )
+	{
+		ResetSkatePlayback();
+	}
+	return bResult;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: tf2-skate board, drawn for every skating player.
+//-----------------------------------------------------------------------------
+void C_TFPlayer::CreateSkateboard()
+{
+	if ( !m_pSkateboard )
+	{
+		m_pSkateboard = C_TFSkateboard::Create( this );
+	}
+}
+
+void C_TFPlayer::RemoveSkateboard()
+{
+	if ( m_pSkateboard )
+	{
+		m_pSkateboard->Destroy();
+		m_pSkateboard = NULL;
+	}
+}
+
+// Third person so the local skater is drawn; ClientModeTFNormal::OverrideView
+// then places the camera where the Skate camera rig put it.
+void C_TFPlayer::SetSkateCamera( bool bSkating )
+{
+	if ( bSkating )
+	{
+		g_ThirdPersonManager.SetDesiredCameraOffset( Vector( 0, 0, 0 ) );
+		::input->CAM_ToThirdPerson();
+		ThirdPersonSwitch( true );
+	}
+	else if ( !g_ThirdPersonManager.WantToUseGameThirdPerson() && !m_Shared.InCond( TF_COND_TAUNTING ) )
+	{
+		::input->CAM_ToFirstPerson();
+		ThirdPersonSwitch( false );
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void C_TFPlayer::CreateKart()
@@ -8754,14 +9014,60 @@ void BuildHandScaleTransformations( CBaseAnimating *pObject, CStudioHdr *hdr, Ve
 }
 
 
+
 //-----------------------------------------------------------------------------
-// Purpose: 
+// tf2-skate: retarget the Skate 3 pose onto the class rig.
+//
+// The sidecar sends 19 Skate joint positions in the skater root's frame. The
+// two rigs have different rest poses and bone axes, so nothing here copies
+// rotations: each TF2 limb bone is turned (minimal rotation) to point where the
+// matching Skate bone points, and the pelvis/chest are turned so the frame
+// spanned by their joints (hips or shoulders, plus the spine) matches. TF2
+// keeps its own bone lengths and twist; everything else follows by FK.
 //-----------------------------------------------------------------------------
+ConVar cl_skate_retarget( "cl_skate_retarget", "1", 0, "Pose TF2 skaters with the Skate 3 skeleton." );
+
+// The retargeting itself is shared with the server (tf_skate_pose.cpp).
+void C_TFPlayer::ApplySkatePose( CStudioHdr *hdr, int boneMask )
+{
+	if ( !cl_skate_retarget.GetBool() )
+		return;
+	const int nBones = hdr->numbones();
+	CUtlVector< matrix3x4_t > bones;
+	bones.SetCount( nBones );
+	for ( int i = 0; i < nBones; ++i )
+	{
+		bones[i] = GetBoneForWrite( i );
+	}
+	matrix3x4_t rootToWorld;
+	AngleMatrix( GetRenderAngles(), GetRenderOrigin(), rootToWorld );
+	if ( !SkateRetargetBones( hdr, bones.Base(), GetSkateJoints(), rootToWorld, m_SkateRig, boneMask ) )
+		return;
+	for ( int i = 0; i < nBones; ++i )
+	{
+		if ( hdr->boneFlags( i ) & boneMask )
+		{
+			GetBoneForWrite( i ) = bones[i];
+		}
+	}
+}
+
 void C_TFPlayer::BuildTransformations( CStudioHdr *hdr, Vector *pos, Quaternion q[], const matrix3x4_t& cameraTransform, int boneMask, CBoneBitList &boneComputed )
 {
 	BaseClass::BuildTransformations( hdr, pos, q, cameraTransform, boneMask, boneComputed );
 
-	if ( GetGroundEntity() == NULL )
+	const bool bSkating = m_Shared.InCond( TF_COND_SKATING );
+	if ( bSkating )
+	{
+		m_BoneAccessor.SetWritableBones( BONE_USED_BY_ANYTHING );
+		ApplySkatePose( hdr, boneMask );
+	}
+
+	if ( bSkating )
+	{
+		m_bDuckJumpInterp = false;
+	}
+	else if ( GetGroundEntity() == NULL )
 	{
 		Vector hullSizeNormal = VEC_HULL_MAX_SCALED( this ) - VEC_HULL_MIN_SCALED( this );
 		Vector hullSizeCrouch = VEC_DUCK_HULL_MAX_SCALED( this ) - VEC_DUCK_HULL_MIN_SCALED( this );
@@ -9063,6 +9369,11 @@ void C_TFPlayer::Simulate( void )
 #define SURFACE_SNOW		 91
 void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
 {
+	// tf2-skate: no footsteps, footprints or step effects on the board.
+	if ( m_Shared.InCond( TF_COND_SKATING ) &&
+		 ( event == 7001 || event == CL_EVENT_FOOTSTEP_LEFT || event == CL_EVENT_FOOTSTEP_RIGHT ) )
+		return;
+
 	if ( event == 7001 )
 	{
 		// Force a footstep sound
@@ -9205,8 +9516,8 @@ void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int even
 
 void C_TFPlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigin, const Vector &vecVelocity )
 {
-	// don't play footstep sound while in kart
-	if ( m_Shared.InCond( TF_COND_HALLOWEEN_KART ) )
+	// don't play footstep sound while in kart (or on a skateboard)
+	if ( m_Shared.InCond( TF_COND_HALLOWEEN_KART ) || m_Shared.InCond( TF_COND_SKATING ) )
 	{
 		return;
 	}

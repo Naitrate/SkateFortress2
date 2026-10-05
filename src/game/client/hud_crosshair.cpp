@@ -191,6 +191,20 @@ void CHudCrosshair::GetDrawPosition ( float *pX, float *pY, bool *pbBehindCamera
 		}
 #endif
 
+#ifdef TF_CLIENT_DLL
+		// tf2-skate: with the camera over the shoulder, put the crosshair on
+		// what a shot from the eyes would hit, not on the screen's centre.
+		extern bool TFShoulderCameraActive();
+		if ( !bUseOffset && TFShoulderCameraActive() )
+		{
+			vecStart = pPlayer->Weapon_ShootPosition();
+			Vector vecAimDirection;
+			AngleVectors( pPlayer->EyeAngles(), &vecAimDirection );
+			vecEnd = vecStart + vecAimDirection * MAX_TRACE_LENGTH;
+			bUseOffset = true;
+		}
+#endif
+
 		if ( bUseOffset )
 		{
 			trace_t tr;

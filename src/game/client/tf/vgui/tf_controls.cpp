@@ -743,6 +743,12 @@ void CTFAdvancedOptionsDialog::OnCommand( const char *command )
 		}
 		return;
 	}
+	else if ( !stricmp( command, "skate_setup" ) || !stricmp( command, "skate_controls" ) )
+	{
+		// tf2-skate: the Skate 3 section's setup and controls buttons.
+		engine->ClientCmd_Unrestricted( CFmtStr( "%s\n", command ) );
+		return;
+	}
 	else if ( !stricmp( command, "Ok" ) )
 	{
 		// OnApplyChanges();

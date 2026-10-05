@@ -332,6 +332,13 @@ void CTFPlayerAnimState::Update( float eyeYaw, float eyePitch )
 	if ( !pTFPlayer )
 		return;
 
+	// tf2-skate: aim straight along the simulated body, not the frozen view.
+	if ( pTFPlayer->m_Shared.InCond( TF_COND_SKATING ) )
+	{
+		eyeYaw = pTFPlayer->GetSkateBodyAngles()[ YAW ];
+		eyePitch = 0.0f;
+	}
+
 	// Get the studio header for the player.
 	CStudioHdr *pStudioHdr = pTFPlayer->GetModelPtr();
 	if ( !pStudioHdr )

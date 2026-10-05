@@ -281,12 +281,30 @@ $Project "Server (TF)"
 			$File	"tf\tf_objective_resource.cpp"
 			$File	"tf\tf_objective_resource.h"
 			$File	"tf\tf_player.cpp"
+			$File	"tf\tf_player_skate.cpp"
+			$File	"tf\tf_bot_skate.cpp"
+			$File	"tf\tf_skateboard_prop.cpp"
+			$File	"tf\tf_bot_skate.h"
+			$File	"$SRCDIR\game\shared\tf\tf_skate_sidecar.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_skate_sidecar.h"
+			$File	"$SRCDIR\game\shared\tf\tf_skate_library.cpp"
+			{
+				$Configuration
+				{
+					$Compiler
+					{
+						$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+					}
+				}
+			}
+			$File	"$SRCDIR\game\shared\tf\tf_skate_library.h"
 			$File	"tf\tf_player.h"
 			$File	"tf\tf_player_resource.cpp"
 			$File	"tf\tf_player_resource.h"
 			$File	"$SRCDIR\game\shared\tf\tf_condition.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_condition.h"
 			$File	"$SRCDIR\game\shared\tf\tf_player_shared.cpp"
+			$File	"$SRCDIR\game\shared\tf\tf_skate_pose.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_player_shared.h"
 			$File	"$SRCDIR\game\shared\tf\tf_playeranimstate.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_playeranimstate.h"

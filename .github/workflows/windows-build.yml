@@ -1,0 +1,43 @@
+# tf2-skate: builds the mod's Windows client.dll and server.dll with Visual
+# Studio 2022 (Valve's createallprojects.bat route, TF only), on every push and
+# on demand. Download them from the run's "mod_tf-win64" artifact into
+# game/mod_tf/bin/x64 (tools/package-mod.sh windows does it with the gh CLI).
+# skate3.dll and libvgmstream.dll come from the engine side:
+# build-skate-lib-windows.sh and build-vgmstream.sh --windows.
+name: Windows build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Generate the Visual Studio solution
+        working-directory: src
+        shell: cmd
+        run: devtools\bin\vpc.exe /tf /define:SOURCESDK +everything /mksln everything.sln
+
+      - name: Build
+        working-directory: src
+        shell: cmd
+        run: msbuild everything.sln /m /p:Configuration=Release /p:Platform=x64 /v:minimal
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mod_tf-win64
+          path: |
+            game/mod_tf/bin/x64/client.dll
+            game/mod_tf/bin/x64/server.dll
+            game/mod_tf/bin/x64/client.pdb
+            game/mod_tf/bin/x64/server.pdb
+          if-no-files-found: error

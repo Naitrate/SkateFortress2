@@ -51,6 +51,7 @@ public:
 
 	virtual float	GetViewModelFOV( void );
 	virtual bool	ShouldDrawViewModel();
+	virtual void	OverrideView( CViewSetup *pSetup ) OVERRIDE;
 	virtual bool	ShouldDrawCrosshair( void );
 	virtual bool	ShouldBlackoutAroundHUD() OVERRIDE;
 	virtual HeadtrackMovementMode_t ShouldOverrideHeadtrackControl() OVERRIDE;

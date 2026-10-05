@@ -502,3 +502,54 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+# tf2-skate: made from the player's own Skate 3 disc by the in-game setup
+# (libskate3's converter), and the libraries ./build-skate-lib.sh,
+# ./build-skate-lib-windows.sh and ./build-vgmstream.sh [--windows] install. EA's data stays local.
+game/mod_tf/sound/skate/
+game/mod_tf/skate3_data/
+game/mod_tf/models/skate/
+game/mod_tf/materials/models/skate/
+game/mod_tf/bin/linux64/libskate3.so
+game/mod_tf/bin/linux64/libvgmstream.so
+game/mod_tf/bin/x64/skate3.dll
+game/mod_tf/bin/x64/libvgmstream.dll
+game/skate-setup-backups/
+
+# tf2-skate: files the game writes while running (per-player state)
+game/mod_tf/GameState.txt
+game/mod_tf/ServerConfig.vdf
+game/mod_tf/stats.txt
+game/mod_tf/tf2_playerstats.dmx
+game/mod_tf/trainingprogress.txt
+game/mod_tf/videoconfig_linux.cfg
+game/mod_tf/voice_ban.dt
+game/mod_tf/modelsounds.cache
+game/mod_tf/demoheader.tmp
+game/mod_tf/downloadlists/
+game/mod_tf/download/
+game/mod_tf/replay/
+game/mod_tf/media/
+game/mod_tf/maps/
+game/mod_tf/screenshots/
+game/mod_tf/sound_workshop/
+game/mod_tf/custom/
+game/mod_tf/cfg/config.cfg
+game/mod_tf/cfg/settings.scr
+game/mod_tf/cfg/user.scr
+game/mod_tf/cfg/local_loadout.txt
+game/mod_tf/cfg/server_blacklist.txt
+game/mod_tf/cfg/pure_server_*.txt
+# Valve's launcher binaries and Steam app id, copied in for local runs
+game/mod_tf_linux64
+game/mod_tf.exe
+game/steam_appid.txt
+# Ninja build state and the generated compile database
+src/.ninja_deps
+src/.ninja_log
+src/compile_commands.json
+# Static libraries the build compiles from src/ (Valve ships the others)
+src/lib/public/linux64/mathlib.a
+src/lib/public/linux64/matsys_controls.a
+src/lib/public/linux64/raytrace.a
+src/lib/public/linux64/tier1.a
+src/lib/public/linux64/vgui_controls.a

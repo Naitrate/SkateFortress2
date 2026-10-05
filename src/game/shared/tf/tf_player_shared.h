@@ -804,6 +804,7 @@ private:
 	void OnAddHalloweenGhostMode( void );
 	void OnAddHalloweenKartDash( void );
 	void OnAddHalloweenKart( void );
+	void OnAddSkating( void );
 	void OnAddBalloonHead( void );
 	void OnAddMeleeOnly( void );
 	void OnAddSwimmingCurse( void );
@@ -881,6 +882,7 @@ private:
 	void OnRemoveHalloweenGhostMode( void );
 	void OnRemoveHalloweenKartDash( void );
 	void OnRemoveHalloweenKart( void );
+	void OnRemoveSkating( void );
 	void OnRemoveBalloonHead( void );
 	void OnRemoveMeleeOnly( void );
 	void OnRemoveSwimmingCurse( void );

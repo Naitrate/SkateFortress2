@@ -5,6 +5,7 @@
 #define TF_PLAYER_H
 #pragma once
 
+#include "tf_skate_pose.h"
 #include "basemultiplayerplayer.h"
 #include "server_class.h"
 #include "tf_achievementdata.h"
@@ -105,6 +106,11 @@ private:
 	float m_flLastTokenTaken = 0.0f;
 	int m_nBucket = 0;
 };
+
+#include "tf_skate_shared.h"
+
+struct SkateInput_t;
+class CMoveData;
 
 //=============================================================================
 //
@@ -1394,6 +1400,54 @@ public:
 	
 	CNetworkVar( int,	m_iKartState );
 	CNetworkVar( float, m_flKartNextAvailableBoost );
+
+	// tf2-skate: Skate 3 sidecar simulation (tf_player_skate.cpp).
+	bool				StartSkating( char *pszError, int nErrorSize );
+	void				StopSkating();
+	void				SkateMove( float flDeltaTime, const SkateInput_t &input, CMoveData *pMove );
+	const QAngle&		GetSkateBodyAngles() const { return m_angSkateBody.Get(); }
+	CNetworkVar( int, m_nSkateState );
+	CNetworkQAngle( m_angSkateBody );
+	CNetworkVector( m_vecSkateDeckOffset );
+	CNetworkQAngle( m_angSkateDeck );
+	CNetworkVector( m_vecSkateCameraOffset );
+	CNetworkQAngle( m_angSkateCamera );
+	CNetworkArray( Vector, m_vecSkateJoints, SKATE_JOINT_COUNT );
+	// Hitboxes follow the skater's pose too (tf_skate_pose.cpp), so shots
+	// land where the skater is drawn.
+	virtual void		SetupBones( matrix3x4_t *pBoneToWorld, int boneMask ) OVERRIDE;
+	SkateRigCache_t		m_SkateRig;
+	// Skater root position and the server time it belongs to, so the owning
+	// client can play its own skater back from a buffer (it can't use the
+	// predicted origin, which never moves while skating).
+	CNetworkVector( m_vecSkateOrigin );
+	CNetworkVar( float, m_flSkateTime );
+	// For the owner's predicted skater (c_tf_skate_predict.cpp): how this
+	// skater was spawned, the world it's in, the usercmds it has run, and
+	// the bails the server forced on it.
+	CNetworkVar( int, m_nSkateSpawnSerial );
+	CNetworkVector( m_vecSkateSpawnOrigin );
+	CNetworkVar( float, m_flSkateSpawnYaw );
+	CNetworkString( m_szSkateDifficulty, 16 );
+	CNetworkVar( int, m_nSkateWorldCRC );
+	CNetworkVar( int, m_nSkateStartCmd );	// first usercmd the skater ran (0 while loading)
+	CNetworkVar( int, m_nSkateAckCmd );		// latest usercmd it ran
+	CNetworkVar( int, m_nSkateFlagCount );
+	CNetworkArray( int, m_nSkateFlagCmd, SKATE_FLAG_HISTORY );
+	CNetworkArray( int, m_nSkateFlagBits, SKATE_FLAG_HISTORY );
+	float				m_flSkateFallSpeed;	// downward speed on the previous step
+	Vector				m_vecSkateVelocity;	// the skater's latest velocity (dropped board, collisions)
+	bool				m_bSkateBailNext;	// a hard collision: wipe out on the next step
+	float				m_flSkateLastBump[ MAX_PLAYERS + 1 ];	// per victim, so one hit doesn't repeat
+	void				SkateCollidePlayers();
+	// Trick scoring for the owner's HUD.
+	CNetworkVar( int, m_nSkateTrickSeq );
+	CNetworkString( m_szSkateTrick, 64 );
+	CNetworkVar( int, m_nSkateTrickScore );
+	CNetworkVar( int, m_nSkateLineScore );
+	CNetworkVar( float, m_flSkateMultiplier );
+	CNetworkVar( int, m_nSkateTotalScore );
+	CNetworkVar( int, m_nSkateScoreFlags );
 	float				m_flHHHKartAttackTime;
 
 	// Wrenchmotron teleport

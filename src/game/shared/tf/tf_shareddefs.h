@@ -822,6 +822,8 @@ enum ETFCond
 	TF_COND_HALLOWEEN_HELL_HEAL              = 128,
 	TF_COND_POWERUPMODE_DOMINANT			 = 129,
 	TF_COND_IMMUNE_TO_PUSHBACK				 = 130,
+	// tf2-skate: movement comes from the Skate 3 sidecar (tf_skate.cpp).
+	TF_COND_SKATING							 = 131,
 		//
 	// ADD NEW ITEMS HERE TO AVOID BREAKING DEMOS
 	//

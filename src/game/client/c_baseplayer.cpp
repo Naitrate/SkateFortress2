@@ -1934,6 +1934,13 @@ void C_BasePlayer::ThirdPersonSwitch( bool bThirdperson )
 	{
 		return false;
 	}
+
+	// tf2-skate: the over-the-shoulder camera (clientmode_tf.cpp).
+	extern bool TFShoulderCameraActive();
+	if ( TFShoulderCameraActive() )
+	{
+		return false;
+	}
 #endif
 
 	int ObserverMode = pLocalPlayer->GetObserverMode();

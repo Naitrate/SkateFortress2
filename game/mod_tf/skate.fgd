@@ -1,0 +1,14 @@
+//=============================================================================
+// TF2 Skate: Hammer entities. In Hammer's game configuration (Tools > Options
+// > Game Configurations), add this file under Game Data files, beside tf.fgd.
+//=============================================================================
+
+@PointClass base(Targetname) size(-4 -4 -4, 4 4 4) color(255 140 0)
+	line(255 140 0, targetname, target) iconsprite("editor/info_target.vmt")
+	= skate_rail : "A node of a Skate 3 grind rail. Place nodes along a rail, ledge or coping " +
+		"(on its top edge, where the trucks should ride) and point each node's Next Node at the " +
+		"following one, like path_track. A chain that loops back to its first node is a closed " +
+		"rail. Skaters can grind anywhere along the chain."
+[
+	target(target_destination) : "Next Node" : : "The next skate_rail along this rail. Leave empty on the last node."
+]

@@ -16,6 +16,8 @@
 #include "baseparticleentity.h"
 #include "tf_player_shared.h"
 #include "c_tf_playerclass.h"
+#include "tf_skate_shared.h"
+#include "tf_skate_pose.h"
 #include "tf_item.h"
 #include "props_shared.h"
 #include "hintsystem.h"
@@ -606,6 +608,89 @@ private:
 	bool	m_bBodygroupsDirty;
 
 	HPARTICLEFFECT	m_hKartDamageEffect;
+
+public:
+	// tf2-skate: networked Skate 3 sidecar state (see tf_player_skate.cpp).
+	// The owning client reads its buffered playback; everyone else uses the
+	// engine-interpolated network values.
+	const QAngle&	GetSkateBodyAngles() const { return m_bSkatePlayback ? m_SkatePlayback.angBody : m_angSkateBody; }
+	const QAngle&	GetSkateDeckAngles() const { return m_bSkatePlayback ? m_SkatePlayback.angDeck : m_angSkateDeck; }
+	const Vector&	GetSkateDeckOffset() const { return m_bSkatePlayback ? m_SkatePlayback.vecDeckOffset : m_vecSkateDeckOffset; }
+	const Vector&	GetSkateCameraOffset() const { return m_bSkatePlayback ? m_SkatePlayback.vecCameraOffset : m_vecSkateCameraOffset; }
+	const QAngle&	GetSkateCameraAngles() const { return m_bSkatePlayback ? m_SkatePlayback.angCamera : m_angSkateCamera; }
+	const Vector*	GetSkateJoints() const { return m_bSkatePlayback ? m_SkatePlayback.vecJoints : m_vecSkateJoints; }
+	void			ResetSkatePlayback();
+	int				GetSkateState() const { return m_bSkatePredicted ? m_nSkatePredictedState : m_nSkateState; }
+	void			CreateSkateboard();
+	void			SetSkateCamera( bool bSkating );
+	void			RemoveSkateboard();
+	int				m_nSkateState;
+	QAngle			m_angSkateBody;
+	Vector			m_vecSkateDeckOffset;
+	QAngle			m_angSkateDeck;
+	Vector			m_vecSkateCameraOffset;
+	QAngle			m_angSkateCamera;
+	class C_TFSkateboard *m_pSkateboard;
+	CInterpolatedVar< QAngle >	m_iv_angSkateBody;
+	CInterpolatedVar< Vector >	m_iv_vecSkateDeckOffset;
+	CInterpolatedVar< QAngle >	m_iv_angSkateDeck;
+	CInterpolatedVar< Vector >	m_iv_vecSkateCameraOffset;
+	CInterpolatedVar< QAngle >	m_iv_angSkateCamera;
+	Vector			m_vecSkateJoints[ SKATE_JOINT_COUNT ];
+	CInterpolatedVarArray< Vector, SKATE_JOINT_COUNT >	m_iv_vecSkateJoints;
+	void			ApplySkatePose( CStudioHdr *hdr, int boneMask );
+	virtual bool	Interpolate( float currentTime ) OVERRIDE;
+
+	// Local skater playback: the predicted origin stays put while skating, and
+	// "interpolated" vars are evaluated at predicted time (ahead of the newest
+	// snapshot), so the owner buffers snapshots itself and plays them back
+	// slightly in the past, like any remote player.
+	struct SkateSample_t
+	{
+		float	flServerTime;
+		double	flArrival;
+		Vector	vecOrigin;
+		QAngle	angBody;
+		Vector	vecDeckOffset;
+		QAngle	angDeck;
+		Vector	vecCameraOffset;
+		QAngle	angCamera;
+		Vector	vecJoints[ SKATE_JOINT_COUNT ];
+	};
+	enum { SKATE_SAMPLES = 24 };
+	void			RecordSkateSample();
+	void			UpdateSkatePlayback();
+	SkateSample_t	m_SkateSamples[ SKATE_SAMPLES ];
+	int				m_nSkateSamples;
+	SkateSample_t	m_SkatePlayback;
+	bool			m_bSkatePlayback;
+	Vector			m_vecSkateOrigin;
+	float			m_flSkateTime;
+	// The predicted skater is drawn instead (c_tf_skate_predict.cpp).
+	bool			m_bSkatePredicted;
+	int				m_nSkatePredictedState;
+	// What the predictor follows (owner only; see tf_player.h).
+	int				m_nSkateSpawnSerial;
+	Vector			m_vecSkateSpawnOrigin;
+	float			m_flSkateSpawnYaw;
+	char			m_szSkateDifficulty[ 16 ];
+	int				m_nSkateWorldCRC;
+	int				m_nSkateStartCmd;
+	int				m_nSkateAckCmd;
+	int				m_nSkateFlagCount;
+	int				m_nSkateFlagCmd[ SKATE_FLAG_HISTORY ];
+	int				m_nSkateFlagBits[ SKATE_FLAG_HISTORY ];
+	// Trick scoring (owner only), read by CHudSkateTricks.
+	int				m_nSkateTrickSeq;
+	char			m_szSkateTrick[ 64 ];
+	int				m_nSkateTrickScore;
+	int				m_nSkateLineScore;
+	float			m_flSkateMultiplier;
+	int				m_nSkateTotalScore;
+	int				m_nSkateScoreFlags;
+	// Bone indices for the retarget, cached per model.
+	SkateRigCache_t	m_SkateRig;
+private:
 	CNetworkVar( float, m_flKartNextAvailableBoost );
 	CNetworkVar( int,	m_iKartHealth );
 	int			m_iOldKartHealth;
