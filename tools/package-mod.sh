@@ -9,7 +9,8 @@
 #
 # Windows client.dll/server.dll come from the SDK fork's "Windows build"
 # GitHub Actions run (artifact mod_tf-win64; with the gh CLI:
-#   gh run download --repo <you>/source-sdk-2013 -n mod_tf-win64 -D game/mod_tf/bin/x64
+#   gh run download --repo Naitrate/SkateFortress2 -n mod_tf-win64 -D game/mod_tf/bin
+#   (the artifact holds x64/)
 # ); skate3.dll and libvgmstream.dll from ./build-skate-lib-windows.sh and
 # ./build-vgmstream.sh --windows.
 set -euo pipefail

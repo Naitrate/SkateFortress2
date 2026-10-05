@@ -223,7 +223,7 @@ Everything but the game DLLs cross-compiles on Linux (podman, MinGW-w64):
 `client.dll` and `server.dll` need Visual Studio 2022, so the SDK fork builds them on
 GitHub Actions (`.github/workflows/windows-build.yml`, on every push). Fetch them
 into `bin/x64` with `gh run download --repo Naitrate/SkateFortress2 -n mod_tf-win64 -D
-game/mod_tf/bin/x64`, then package:
+game/mod_tf/bin` (the artifact holds `x64/`), then package:
 
 ```bash
 tools/package-mod.sh windows          # tf2-skate-windows.zip (or: linux)

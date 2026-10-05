@@ -1,7 +1,7 @@
 # tf2-skate: builds the mod's Windows client.dll and server.dll with Visual
 # Studio 2022 (Valve's createallprojects.bat route, TF only), on every push and
-# on demand. Download them from the run's "mod_tf-win64" artifact into
-# game/mod_tf/bin/x64 (tools/package-mod.sh windows does it with the gh CLI).
+# on demand. Download the run's "mod_tf-win64" artifact (it holds x64/) into
+# game/mod_tf/bin; see tools/package-mod.sh.
 # skate3.dll and libvgmstream.dll come from the engine side:
 # build-skate-lib-windows.sh and build-vgmstream.sh --windows.
 name: Windows build
