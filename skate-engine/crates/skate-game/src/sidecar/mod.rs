@@ -45,7 +45,7 @@ const STEP_PIPELINED: u32 = 2;
 const STATE_LOADING: u32 = u32::MAX;
 
 /// Joints sent for retargeting, in wire order. Must match SKATE_JOINT_* in
-/// sdk/src/game/shared/tf/tf_skate_shared.h.
+/// src/game/shared/tf/tf_skate_shared.h.
 const RETARGET_JOINTS: [&str; 19] = [
     "HIPS", "SPINE", "SPINE3", "NECK", "HEAD",
     "LEFTARM", "LEFTFOREARM", "LEFTHAND",

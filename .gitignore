@@ -553,3 +553,45 @@ src/lib/public/linux64/matsys_controls.a
 src/lib/public/linux64/raytrace.a
 src/lib/public/linux64/tier1.a
 src/lib/public/linux64/vgui_controls.a
+
+# tf2-skate: Skate 3's own files never belong here. Players convert their own
+# disc in game; these are disc images, executables and EA's formats.
+*.iso
+*.ISO
+*.xex
+*.xexp
+*.xbe
+*.god
+*.big
+*.BIG
+*.abk
+*.bnk
+*.csi
+*.ems
+*.snr
+*.sns
+*.sps
+*.rx2
+*.abin
+*.vlt
+*.stategraph
+*.skbd
+# Reverse-engineering workspaces (decrypted executables, Ghidra projects)
+*.pe
+*.gpr
+*.rep/
+decomp/
+# Build caches and local clutter
+build-cache/
+skate-engine/target/
+thirdparty/
+__pycache__/
+*.pyc
+.fc_probe.py
+.direnv/
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+*.zip

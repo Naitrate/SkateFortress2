@@ -2,7 +2,7 @@
 //! `libm` crate.
 //!
 //! The TF2 mod predicts each player's skater on their own PC and checks it
-//! against the server's (sdk/src/game/client/tf/c_tf_skate_predict.cpp), so
+//! against the server's (src/game/client/tf/c_tf_skate_predict.cpp), so
 //! the simulation must give bit-identical results on every machine. Rust's
 //! f32/f64 methods, and glam's, end up as calls to the platform's C functions
 //! (glibc on Linux, MinGW's and msvcrt.dll's on Windows), and those don't

@@ -1,4 +1,4 @@
-//! Wire format shared with sdk/src/game/shared/tf/tf_skate_sidecar.cpp.
+//! Wire format shared with src/game/shared/tf/tf_skate_sidecar.cpp.
 //!
 //! Frame: u32 length (of everything after it), u8 message type, payload.
 //! Replies reuse the request's type; their payload starts with u8 ok. A
