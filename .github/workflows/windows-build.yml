@@ -8,6 +8,9 @@ name: Windows build
 
 on:
   push:
+    paths:
+      - "src/**"
+      - ".github/workflows/windows-build.yml"
   workflow_dispatch:
 
 jobs:
@@ -29,15 +32,22 @@ jobs:
 
       - name: Build
         working-directory: src
-        shell: cmd
-        run: msbuild everything.sln /m /p:Configuration=Release /p:Platform=x64 /v:minimal
+        shell: pwsh
+        run: |
+          # VPC names the solution's platforms itself; build its Release one.
+          $configs = Select-String -Path everything.sln -Pattern '^\s*(Release\|[^=\s]+)\s*=' |
+            ForEach-Object { $_.Matches[0].Groups[1].Value } | Select-Object -Unique
+          Write-Host "Release configurations: $configs"
+          $platform = ($configs | Select-Object -First 1).Split('|')[1]
+          msbuild everything.sln /m /p:Configuration=Release "/p:Platform=$platform" /v:minimal
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
       - uses: actions/upload-artifact@v4
         with:
           name: mod_tf-win64
           path: |
-            game/mod_tf/bin/x64/client.dll
-            game/mod_tf/bin/x64/server.dll
-            game/mod_tf/bin/x64/client.pdb
-            game/mod_tf/bin/x64/server.pdb
+            game/mod_tf/bin/**/client.dll
+            game/mod_tf/bin/**/server.dll
+            game/mod_tf/bin/**/client.pdb
+            game/mod_tf/bin/**/server.pdb
           if-no-files-found: error
