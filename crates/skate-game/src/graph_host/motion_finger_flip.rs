@@ -2,6 +2,7 @@
 use skate_core::point_graph::PointGraph;
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(super) struct Settings {
     minimum: f32,
     maximum: f32,
@@ -32,7 +33,7 @@ impl Settings {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(super) struct State {
     elapsed: f32,
 }

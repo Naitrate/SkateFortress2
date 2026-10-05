@@ -19,7 +19,7 @@ pub struct BankSource {
     pub source_bytes: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ClipAttribute {
     pub name: String,
@@ -32,7 +32,7 @@ pub struct ClipAttribute {
     pub source_offset: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ClipMetadata {
     pub name: String,
@@ -44,7 +44,7 @@ pub struct ClipMetadata {
     pub attributes: Vec<ClipAttribute>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PhaseBlendMetadata {
     pub name: String,
@@ -59,7 +59,7 @@ pub enum TreeMetadata<'a> {
     Selector(&'a SelectorMetadata),
     SelectionSpace(&'a SelectionSpaceMetadata),
 }
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SelectorMetadata {
     pub name: String,
@@ -97,7 +97,7 @@ struct File {
     unsupported_trees: Vec<UnsupportedTree>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct AnimationMetadata {
     pub source_bank: String,
     pub source_sha256: String,

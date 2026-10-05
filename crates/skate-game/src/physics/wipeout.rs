@@ -7,6 +7,7 @@ use skate_core::player::{
     wipeout::{self, Mode, Requests, Settings},
 };
 use skate_data::collections::Collections;
+#[derive(Clone)]
 pub(crate) struct Wipeout {
     pub state: Requests,
     settings: Settings,

@@ -11,6 +11,7 @@ use super::{
 };
 use crate::{math::Basis3, point_graph::PointGraph, trigonometry};
 
+#[derive(Clone)]
 pub struct BoardAnimationSettings {
     pub slow: PointGraph<8>,
     pub fast: PointGraph<8>,

@@ -39,6 +39,7 @@ impl PreInputResult {
         }
     }
 }
+#[derive(Clone)]
 pub(crate) struct PreInputManager {
     pub pending_geometry: bool,
     pub result: PreInputResult,

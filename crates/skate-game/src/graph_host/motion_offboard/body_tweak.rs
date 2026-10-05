@@ -37,7 +37,7 @@ pub(crate) struct Physical {
     pub board_held: bool,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct State {
     ticks: u32,
     axes: [f32; 2],

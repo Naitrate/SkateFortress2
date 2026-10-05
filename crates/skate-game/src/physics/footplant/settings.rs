@@ -1,6 +1,7 @@
 //! Cached physics_footplantmanager layout used by82D6FD60/82D6F5F0/82D70070.
 use skate_data::collections::Collections;
 use skate_core::point_graph::PointGraph;
+#[derive(Clone)]
 pub(super) struct Settings {
     pub deck_bounds: [f32; 4],      //0
     pub max_leg_angle_error: f32,   //280 degrees

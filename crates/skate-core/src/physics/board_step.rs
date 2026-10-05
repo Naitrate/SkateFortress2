@@ -98,7 +98,7 @@ pub struct BoardStepSettings {
 /// Reuses the contact workspace between ticks. Seven board bodies and the
 /// separate hook share solver reactions. This does not assign islands or implement the
 /// native activation partition for multiple disconnected assemblies.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct BoardStep {
     contacts: Vec<RetailContactJacobian>,
     reports: Vec<BoardContactReport>,

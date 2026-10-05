@@ -5,6 +5,7 @@ mod math;
 use math::*;
 pub type Vector = [f32; 4];
 
+#[derive(Clone)]
 pub struct Settings {
     /// Biped320 <- physics_biped350, x+16/y+32.
     pub sprint_speed: PointGraph<4>,

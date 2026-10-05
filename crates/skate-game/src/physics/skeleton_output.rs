@@ -15,6 +15,7 @@ use skate_core::{
 };
 use skate_data::{animation_frames::AnimationFrames, collections::Collections};
 
+#[derive(Clone)]
 pub(crate) struct SkeletonOutput {
     pub pose: skeleton_output::SkeletonOutput,
     pub wobble: wobble::Wobble,

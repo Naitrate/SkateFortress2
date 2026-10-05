@@ -7,6 +7,7 @@ const CLASS: &str = "camera_shots";
 const CLASS_HASH: u64 = 0xf27dd93e059ef6cb;
 const RADIANS: f32 = f32::from_bits(0x3c8efa35);
 
+#[derive(Clone)]
 pub(crate) struct StockShots(BTreeMap<String, ShotDefinition>);
 
 impl StockShots {

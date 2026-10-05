@@ -17,6 +17,7 @@ pub struct BodyFlipState {
 
 /// Actual Attrib::GetAttributePointer results (82B72420), not guessed settings.
 /// Missing collection/attribute resolves to the supplied live 830D0850 value.
+#[derive(Clone)]
 pub struct BodyFlipSettings {
     /// Hash 26E7322CCDC3FE23.
     pub smoothing: Option<f32>,

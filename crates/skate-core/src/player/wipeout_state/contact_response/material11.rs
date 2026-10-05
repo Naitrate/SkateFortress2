@@ -5,6 +5,7 @@ use crate::{
     player::wipeout_state::math::*,
 };
 
+#[derive(Clone)]
 pub(super) struct Response {
     normal: V,                 //16
     previous_velocity: V,      //32

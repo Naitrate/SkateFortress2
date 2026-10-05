@@ -31,7 +31,7 @@ impl Operation {
 /// MotionGraph full-object5924 and5948, retained alongside score flags5972.
 /// Native24-byte slots contain five encoded words plus initialized padding;
 /// host representation preserves the names without copying native padding.
-#[derive(Default, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct Names {
     pub first: Option<AttributeName>,
     pub second: Option<AttributeName>,

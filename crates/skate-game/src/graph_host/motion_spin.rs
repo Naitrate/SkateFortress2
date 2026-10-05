@@ -9,6 +9,7 @@ use skate_data::collections::Collections;
 const FRONT: &str = "IA_BODYSPIN_OLLIE_FS_0_N";
 const BACK: &str = "IA_BODYSPIN_OLLIE_BS_0_N";
 
+#[derive(Clone)]
 pub struct Settings {
     map: PointGraph<8>,
     blend_out: f32,
@@ -105,7 +106,7 @@ impl PrelandingPhysical {
 }
 
 ///82BABE20 initializes every represented scalar and the state enum to zero.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct State {
     mode: u32,
     previous_spin: f32,

@@ -1,7 +1,7 @@
 //! TU3 one-truck control82D89F58 and orientation82D40290.
 use super::*;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Control {
     pub yaw: f32,
     pub pitch: f32,

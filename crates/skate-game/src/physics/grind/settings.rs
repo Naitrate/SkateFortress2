@@ -3,6 +3,7 @@ use skate_core::physics::grind_forces::{post, reckoning};
 use skate_core::point_graph::PointGraph;
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(super) struct Settings {
     pub standard_angular_drag: f32,
     pub pin_vs_slope: PointGraph<4>,

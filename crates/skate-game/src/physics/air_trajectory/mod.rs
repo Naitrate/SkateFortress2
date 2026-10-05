@@ -14,6 +14,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub struct AirTrajectoryRuntime {
     pub selector: TrajectorySelector,
     pub settings: SelectorSettings,

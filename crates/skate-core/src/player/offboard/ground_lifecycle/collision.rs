@@ -4,6 +4,7 @@ use crate::player::{
     offboard::ground_entry::Vector,
     wipeout::{self, Requests},
 };
+#[derive(Clone)]
 pub struct CollisionSettings {
     ///physics_wipeout/default layout96..120.
     pub vehicle_scalar: f32,

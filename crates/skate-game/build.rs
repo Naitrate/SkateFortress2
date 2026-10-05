@@ -36,7 +36,14 @@ fn main() {
     println!("cargo:rustc-env=SKATE_BUILD_ID={} revision={} dirty={dirty:?} build_unix_ns={stamp} target={} profile={} dynamic={} compiler={compiler}", env::var("CARGO_PKG_VERSION").unwrap(), revision, env::var("TARGET").unwrap(), env::var("PROFILE").unwrap(), env::var_os("CARGO_FEATURE_DEV_DYNAMIC").is_some());
     println!("cargo:rerun-if-changed=../../docs/images/skating-crab.ico");
     println!("cargo:rerun-if-env-changed=RC");
-    if env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("windows") {
+    // libskate3.so binds its own maths functions (src/det_math.rs) before the
+    // system libm's.
+    if env::var("CARGO_PKG_NAME").as_deref() == Ok("skate3-lib") && env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("linux") {
+        println!("cargo:rustc-cdylib-link-arg=-Wl,-Bsymbolic");
+    }
+    // The icon is only for the skate3rust executable; the TF2 mod's library
+    // (skate3-lib, which shares this script) may be cross-compiled without rc.exe.
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("windows") || env::var("CARGO_PKG_NAME").as_deref() == Ok("skate3-lib") {
         return;
     }
     let sdk = program_files_x86().join("Windows Kits/10/bin");

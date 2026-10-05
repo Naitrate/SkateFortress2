@@ -385,7 +385,7 @@ pub(super) fn impulse(
         )
     }
 }
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct ContactFrame {
     pub tick: u64,
     pub contacts: Vec<Value>,

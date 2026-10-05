@@ -18,6 +18,7 @@ use skate_core::{
 /// trucks A8B0/A8FC, wheel sphere AB94 assigned to all four wheels AC44.
 /// Initialize from the actual authored shape flags, then collision generation
 /// reads these live flags instead of immutable construction settings.
+#[derive(Clone)]
 pub(crate) struct VolumeFlags {
     pub deck: bool,
     pub trucks: bool,

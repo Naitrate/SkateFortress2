@@ -44,6 +44,7 @@ impl AirState {
         self.spin_speed = 0.0;
     }
 }
+#[derive(Clone)]
 pub struct Settings {
     pub ground_normal_smoothing: [f32; 4],
     ///PointNegGraphData8 layout336; caller directly evaluates its X/Y352/384.

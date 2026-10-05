@@ -134,6 +134,7 @@ pub struct SkeletonContactFlags {
     pub any: bool,
 }
 
+#[derive(Clone)]
 pub struct SkeletonCollisionFeedback {
     pub settings: SkeletonFeedbackSettings,
     pub contact_age: [f32; 24],

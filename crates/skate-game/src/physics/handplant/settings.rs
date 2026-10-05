@@ -2,6 +2,7 @@
 use skate_core::point_graph::PointGraph;
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(super) struct Settings {
     pub window: [PointGraph<4>; 7],
     pub depth: f32,

@@ -15,6 +15,7 @@ use skate_data::collections::Collections;
 use super::motion_animation::MotionAnimation;
 use skate_core::animation::playback_parameters::{AttributeSink, SettableAttribute};
 
+#[derive(Clone)]
 pub(super) struct Settings {
     pub antic_length_to_hippy_height: PointGraph<8>,
 }
@@ -32,7 +33,7 @@ impl Settings {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(super) struct State {
     active: bool,
     elapsed: f32,

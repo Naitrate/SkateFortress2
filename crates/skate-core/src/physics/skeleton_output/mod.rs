@@ -8,6 +8,7 @@ use super::skeleton_animation_record::{AnimationPartTransform as Transform, comp
 use crate::animation::foot_ik::{drive::Geometry, transforms::inverse_rigid};
 
 /// Stock SkeletonData ids, nearest physical ancestors, and volume inverses.
+#[derive(Clone)]
 pub struct SkeletonOutput {
     pub bone_indices: [usize; 24],
     pub geometry: Geometry,

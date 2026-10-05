@@ -9,6 +9,7 @@ use crate::physics::{
     skeleton_root::inverse_rigid,
 };
 
+#[derive(Clone)]
 pub struct SkeletonBody {
     pub definition: SkeletonBodyDefinition,
     pub record: SkeletonPhysicalRecord,

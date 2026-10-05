@@ -273,6 +273,11 @@ pub(super) fn advance(
         [up.x, up.y, up.z, 0.0],
         &skater.trajectory.selector,
     )?;
+    //Same point as postphysics wipeout checks: published below as condition65
+    //and consumed by the next tick's state selection.
+    if std::mem::take(&mut skater.external_wipeout) {
+        skater.wipeout.state.request(0, 0.0);
+    }
     player_state::publish(physics, skater)?;
     skater
         .grind_camera

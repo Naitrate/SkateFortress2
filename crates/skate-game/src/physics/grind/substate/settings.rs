@@ -3,6 +3,7 @@ use super::super::Family;
 use skate_core::{point_graph::PointGraph, riding::collision_response::CollisionResponseSettings};
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct Settings {
     pub(super) collision: CollisionResponseSettings,
     pub(super) animated_board_threshold: f32,

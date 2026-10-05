@@ -4,6 +4,7 @@ use skate_core::{
     point_graph::PointGraph,
 };
 use skate_data::collections::Collections;
+#[derive(Clone)]
 pub(crate) struct GroundAnimationSettings {
     pub jump: GroundJumpSettings,
     pub modes: [GroundJumpMode; 5],

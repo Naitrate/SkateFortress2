@@ -21,6 +21,7 @@ pub(crate) mod runtime;
 #[cfg(test)]
 mod tests;
 
+#[derive(Clone)]
 pub(crate) struct Owner {
     pub state: native::State,
     settings: Settings,

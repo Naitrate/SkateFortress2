@@ -11,6 +11,7 @@ use skate_core::player::offboard::landing_deck::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct Owner {
     ///Air and transitions must mutate this same manager, including Reset/force.
     pub manager: Manager,

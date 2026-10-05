@@ -7,6 +7,7 @@ use skate_core::{
     physics::contact::RetailContactMaterial,
     player::slide_state::{SlideSettings, SlideSurface},
 };
+#[derive(Clone)]
 pub(crate) struct SlideState {
     pub state: skate_core::player::slide_state::SlideState,
     settings: SlideSettings,

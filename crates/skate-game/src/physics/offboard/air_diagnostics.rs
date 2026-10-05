@@ -31,6 +31,7 @@ struct Sample {
     reasons: [bool; 34],
 }
 
+#[derive(Clone)]
 pub(crate) struct History {
     samples: VecDeque<Sample>,
     reports: usize,

@@ -1,6 +1,7 @@
 //! Host-owned orientation stream using recovered82970628 arithmetic.
 //! Draw ownership/seed bookkeeping is host policy; do not claim original
 //! cross-subsystem interleaving. No random draw occurs until AddNoise asks.
+#[derive(Clone)]
 pub(super) struct OrientationRandom {
     words: [u32; 8],
 }

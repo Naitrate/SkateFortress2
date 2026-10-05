@@ -16,6 +16,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct GroundPumping {
     settings: PumpingSettings,
     modes: [GroundPumpingMode; 5],

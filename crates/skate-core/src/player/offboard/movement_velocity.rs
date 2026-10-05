@@ -5,6 +5,7 @@ mod math;
 use math::*;
 pub type Vector = [f32; 4];
 
+#[derive(Clone)]
 pub struct Settings {
     /// Biped0x490 <- layout0x2B0 Hash_31309236050A8F09.
     pub slope_speed_scalar: PointGraph<8>,

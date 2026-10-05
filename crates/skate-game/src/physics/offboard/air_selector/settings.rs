@@ -3,6 +3,7 @@
 mod curves;
 use skate_core::{player::offboard::air_selector, point_graph::PointGraph};
 use skate_data::collections::Collections;
+#[derive(Clone)]
 pub(crate) struct Settings {
     pub query: air_selector::Settings,
     pub blend: PointGraph<8>,

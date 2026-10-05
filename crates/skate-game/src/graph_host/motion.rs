@@ -59,6 +59,7 @@ pub struct MotionPhysical {
 #[path = "motion_instances.rs"]
 mod instances;
 use instances::Instance;
+#[derive(Clone)]
 pub struct MotionHost {
     pub animation: MotionAnimation,
     pub playback_context: PlaybackContext,

@@ -21,6 +21,7 @@ use skate_data::collections::Collections;
 
 ///The original board's persistent blend history, shared across Ground/Air
 ///state changes. This must live alongside the physical board, not per entry.
+#[derive(Clone)]
 pub(crate) struct SkeletonAir {
     pub board_animation: BoardAnimation,
     settings: BoardAnimationSettings,

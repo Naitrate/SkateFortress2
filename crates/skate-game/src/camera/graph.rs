@@ -9,6 +9,7 @@ use crate::graph_runtime::CompiledGraph;
 use super::{graph_conditions::{Condition, shot_names}, graph_subject::{CameraGraphEnvironment,
     CameraGraphSubject}, shot_data::StockShots};
 
+#[derive(Clone)]
 pub(super) struct CameraGraph {
     program: CompiledGraph,
     controller: Controller,
@@ -17,6 +18,7 @@ pub(super) struct CameraGraph {
     slow_motion: Vec<Option<SlowMotionController>>,
     slow_motion_settings: SlowMotionSettings,
 }
+#[derive(Clone)]
 enum Behavior {
     Choose { names: Vec<String>, incoming: f32, outgoing: f32 },
     Print(String),

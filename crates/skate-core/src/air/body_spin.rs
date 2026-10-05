@@ -42,6 +42,7 @@ impl BodySpinState {
 
 /// Native cached inputs at +176/+180, seven 80-byte curves, and 830BD300.
 /// The vector threshold's producer must be supplied: no guessed retail default.
+#[derive(Clone)]
 pub struct BodySpinSettings {
     pub derivative_floor: f32,
     pub acceleration_limit: f32,

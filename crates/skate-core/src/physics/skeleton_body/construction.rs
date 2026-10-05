@@ -71,6 +71,7 @@ pub struct SkeletonPart {
     pub inverse_mass_ragdoll: f32,
 }
 
+#[derive(Clone)]
 pub struct SkeletonBodyDefinition {
     pub parts: [SkeletonPart; PART_COUNT],
     pub bones: [BoneSettings; ANIMATION_PART_COUNT],

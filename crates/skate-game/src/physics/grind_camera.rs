@@ -12,7 +12,7 @@ pub(crate) struct Contact {
     pub family: u32,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct GrindCamera {
     current: V,
     previous: V,

@@ -36,6 +36,7 @@ pub(crate) struct RidingPoseInputs {
     pub body_spin: f32,
 }
 
+#[derive(Clone)]
 pub(crate) struct RidingOutputs {
     pub ground: BoardGroundState,
     pub wheel_lines: WheelLineState,

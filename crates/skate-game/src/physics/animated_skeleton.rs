@@ -22,6 +22,7 @@ use skate_data::{
 };
 use std::path::Path;
 
+#[derive(Clone)]
 pub(crate) struct AnimatedSkeleton {
     pub record: SkeletonAnimationRecord,
     pub roots: SkeletonRootFrames,

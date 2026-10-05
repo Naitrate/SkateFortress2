@@ -38,11 +38,15 @@ pub(crate) struct AnimationSource {
     evaluator: Arc<PoseEvaluator>,
 }
 impl AnimationSource {
-    fn load(root: &Path) -> Result<Arc<Self>, String> {
+    pub(crate) fn load(root: &Path) -> Result<Arc<Self>, String> {
         let banks = skate_data::animation_banks::AnimationBanks::load(root)?;
         let mut evaluator = PoseEvaluator::from_banks(&banks)?;
         evaluator.load_authored_clips(root)?;
         Ok(Arc::new(Self { banks, evaluator: Arc::new(evaluator) }))
+    }
+
+    pub(crate) fn metadata(&self) -> Result<skate_data::animation_metadata::AnimationMetadata, String> {
+        self.banks.metadata()
     }
 }
 
@@ -62,6 +66,7 @@ pub(crate) struct AnimationPhysical {
     pub time_since_teleport: f32,
 }
 
+#[derive(Clone)]
 pub(crate) struct SkaterAnimation {
     pub action: ActionHost,
     pub motion: MotionHost,

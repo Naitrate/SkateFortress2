@@ -1,6 +1,6 @@
 //! SHA-256 source identity for private bank bytes (FIPS 180-4).
 //! This is file integrity bookkeeping, separate from game arithmetic.
-pub(crate) fn digest(bytes: &[u8]) -> String {
+pub fn digest(bytes: &[u8]) -> String {
     let mut state = [
         0x6a09e667u32,
         0xbb67ae85,

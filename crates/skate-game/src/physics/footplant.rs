@@ -10,6 +10,7 @@ pub(super) mod ground;
 use settings::Settings;
 pub(crate) use update::FootplantFrame;
 pub(crate) type V = [f32; 4];
+#[derive(Clone)]
 pub(crate) struct Footplant {
     pub enabled: bool, //240; FullReset and Air Enter clear this separately.
     pub(super) result: QueryResult,

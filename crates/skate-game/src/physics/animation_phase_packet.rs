@@ -11,6 +11,7 @@ use skate_core::{
 use skate_data::collections::Collections;
 
 /// Host-owned player preferences, distinct from the stock response curves.
+#[derive(Clone)]
 pub(crate) struct AnimationProfile {
     pub maximum_ground_angle_degrees: f32,
     pub skitch_transition_time: f32,

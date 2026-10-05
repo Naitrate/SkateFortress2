@@ -3,7 +3,7 @@ use super::validate_name;
 use crate::abin::{Error, Reader, RecordHeader, Result};
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BlendSimplexMetadata {
     pub children: Vec<usize>,
@@ -12,7 +12,7 @@ pub struct BlendSimplexMetadata {
     pub normal_bits: Vec<Vec<u32>>,
     pub scale_bits: Vec<u32>,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BlendSpaceMetadata {
     pub name: String,

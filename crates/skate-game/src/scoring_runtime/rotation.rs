@@ -40,6 +40,7 @@ impl Tracker {
         self.previous = basis;
     }
 }
+#[derive(Clone)]
 pub(super) struct Rotation {
     player: Tracker,
     board: Tracker,

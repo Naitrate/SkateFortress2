@@ -19,6 +19,7 @@ use skate_core::{
 use skate_data::collections::Collections;
 use std::convert::Infallible;
 
+#[derive(Clone)]
 pub(super) struct EntrySettings {
     deck_angular_drag: f32,
     powerslide_exit: f32,

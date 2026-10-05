@@ -9,7 +9,7 @@ pub enum Operation {
 }
 
 /// Live MG CA4 bits20/19 and gesture outputs CEC/CF0.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Controls {
     pub seed_from_air_tweak: bool,
     pub gestures_enabled: bool,
@@ -17,7 +17,7 @@ pub struct Controls {
 }
 
 /// Wipeout instance82BC0690: counter8, angles12/16, velocity24, axes28/32, latch36.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct State {
     pub(super) ticks: u32,
     pub(super) lean: f32,
@@ -27,6 +27,7 @@ pub struct State {
     pub(super) released: bool,
 }
 
+#[derive(Clone)]
 pub struct Settings {
     pub(super) threshold: f32,
     pub(super) twist_velocity: f32,

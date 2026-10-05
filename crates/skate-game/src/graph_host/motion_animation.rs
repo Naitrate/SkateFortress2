@@ -19,6 +19,7 @@ use skate_data::animation_metadata::{AnimationMetadata, TreeMetadata};
 use tree_builder::build;
 use super::outputs::ActionGraphOutput;
 
+#[derive(Clone)]
 pub struct MotionAnimation {
     metadata: AnimationMetadata,
     current: Option<PlaybackTree>,

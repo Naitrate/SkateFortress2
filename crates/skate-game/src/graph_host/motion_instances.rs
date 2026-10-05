@@ -1,5 +1,6 @@
 //! Per-node allocation retained by the production MotionHost.
 use super::*;
+#[derive(Clone)]
 pub(super) enum Instance {
     Grind(super::super::motion_grind::State),
     Trick(i32),

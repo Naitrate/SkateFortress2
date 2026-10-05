@@ -25,6 +25,7 @@ use std::sync::Arc;
 
 /// Immutable stock tables selected by the processed packet, including its
 /// difficulty-dependent SurfacePhysics normalization. No per-tick parsing.
+#[derive(Clone)]
 pub(crate) struct GroundProfiles(Vec<Vec<Arc<GroundSettings>>>);
 impl GroundProfiles {
     pub fn load(data: &Collections) -> Result<Self, String> {

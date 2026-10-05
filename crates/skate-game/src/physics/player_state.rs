@@ -19,6 +19,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct PlayerState {
     pub registry: registry::StateRegistry,
     pub lifecycle: PhysicalPlayerStateLifecycle,

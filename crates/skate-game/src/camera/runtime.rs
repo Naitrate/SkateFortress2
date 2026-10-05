@@ -11,7 +11,7 @@ use super::{collision::CameraCollision, graph::CameraGraph, graph_subject::Camer
     settings, shake_data, shot_data::StockShots, subject::{CameraSubjectSnapshot, SubjectPublisher},
     trajectory::{CameraTrajectory, TrajectoryResult}};
 
-#[derive(Resource)]
+#[derive(Clone, Resource)]
 pub(crate) struct CameraRuntime {
     manager: CameraMan,
     subject: SubjectPublisher,

@@ -15,6 +15,7 @@ use skate_core::player::wipeout_state::{
 use skate_data::collections::Collections;
 use std::path::Path;
 
+#[derive(Clone)]
 pub(crate) struct WipeoutState {
     pub(crate) ragdoll: ragdoll::RagdollSetup,
     pub state: State,

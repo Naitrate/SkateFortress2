@@ -77,7 +77,7 @@ impl Operation {
 
 /// Meaningful graph outputs are retained even though a scoring UI is outside
 /// this game.82595D08 sets a name and ORs a bit in the graph's score packet.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ScorePacket {
     pub handplant: Option<(skate_core::animation::output::attributes::AttributeName, [f32; 2])>,
     /// ScoringGrabs 82BBEF60: selected authored name and tweak vector.
@@ -109,7 +109,7 @@ impl ScorePacket {
 }
 
 ///CreateInstance82BBAA98 seeds velocity0 and prior-air false.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct LandingData {
     previous_velocity: f32,
     was_air: bool,

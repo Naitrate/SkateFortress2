@@ -19,6 +19,7 @@ const EMPTY: Trajectory = Trajectory {
     duration: -1.0,
 };
 
+#[derive(Clone)]
 pub(crate) struct Handplant {
     settings: Settings,
     pub flags: u32,

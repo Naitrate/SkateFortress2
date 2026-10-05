@@ -53,7 +53,7 @@ impl Operation {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Requests {
     pub underflip: bool,
     pub dark_catch: bool,

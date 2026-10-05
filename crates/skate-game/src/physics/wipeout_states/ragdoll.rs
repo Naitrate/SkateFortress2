@@ -7,6 +7,7 @@ use skate_core::physics::skeleton_body::{
 use skate_data::collections::Collections;
 use std::path::Path;
 
+#[derive(Clone)]
 pub(crate) struct RagdollSetup {
     settings: settings::Settings,
 }

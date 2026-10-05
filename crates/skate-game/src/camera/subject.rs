@@ -22,6 +22,7 @@ pub(crate) struct CameraSubjectSnapshot {
     pub graph: super::graph_subject::CameraGraphSubject,
 }
 
+#[derive(Clone)]
 pub(super) struct SubjectPublisher {
     pose: SubjectPosePublisher,
     anchors: Anchors,

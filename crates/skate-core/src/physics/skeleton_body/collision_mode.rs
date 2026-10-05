@@ -24,6 +24,7 @@ pub struct SkeletonPartCollision {
     pub material: RetailContactMaterial,
 }
 
+#[derive(Clone)]
 pub struct SkeletonCollisionMode {
     pub parts: [SkeletonPartCollision; PART_COUNT],
     pub disable_count: [u32; ANIMATION_PART_COUNT],

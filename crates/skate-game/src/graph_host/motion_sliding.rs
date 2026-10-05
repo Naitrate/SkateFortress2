@@ -4,6 +4,7 @@ use skate_core::input::set_turning::SlideLatch;
 use skate_core::{animation::playback_parameters::ParameterInputs, point_graph::PointGraph};
 use skate_data::{collections::Collections, state_graph::attributes::Attributes};
 
+#[derive(Clone)]
 pub struct Settings {
     speed_threshold: f32,
     well_into_slide: f32,
@@ -76,7 +77,7 @@ impl Operation {
     }
 }
 ///Native instance8..20; the three high flags initialize clear.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct State {
     not_sliding_time: f32,
     previous_right: f32,

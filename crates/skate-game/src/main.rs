@@ -1,56 +1,5 @@
-mod fps_overlay;
-mod animation;
-mod crash_report;
-mod crash_context;
-mod multiplayer;
-mod apt_vm;
-mod apt_display;
-mod apt_movie;
-mod apt_text;
-mod apt_scene;
-mod hud_runtime;
-mod scoring_runtime;
-mod scoring_hud;
-mod animation_pose;
-mod app;
-mod assets;
-mod camera;
-mod config;
-mod setup;
-mod updater;
-mod map_library;
-mod map_render;
-mod map_transition;
-mod difficulty;
-mod custom_difficulty;
-mod graph_host;
-mod graph_runtime;
-mod input;
-mod session_marker;
-mod physics;
-mod skater_animation;
-mod verification;
-mod performance;
-mod profiling;
-mod graphics_menu;
-mod modding;
-mod customiser;
-mod customiser_parts;
-mod customiser_material;
-mod custom_models;
-mod teleport_menu;
-mod render_capacity;
-mod retail_render;
-mod retail_character;
-mod retail_exposure;
-mod retail_irradiance;
-mod retail_sky;
-mod presentation;
-mod debug_cam;
-mod replay;
-mod world;
-mod grind_world;
-mod skate_world;
+// Module tree shared with sidecar_main.rs.
+include!("modules.rs");
 
 fn main() -> bevy::app::AppExit {
     match updater::recover() {

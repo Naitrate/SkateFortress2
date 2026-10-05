@@ -45,6 +45,7 @@ pub struct Observation {
     pub alternate_world: bool,   //SimController virtual0
 }
 
+#[derive(Clone)]
 pub struct History {
     initial: Candidate,
     entries: Vec<Candidate>, // native33 slots reserve one sentinel:32 entries

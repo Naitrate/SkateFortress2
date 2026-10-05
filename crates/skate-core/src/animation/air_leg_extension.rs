@@ -9,6 +9,7 @@ pub enum Bone {
     RightToe,
 }
 
+#[derive(Clone)]
 pub struct Settings {
     pub going_up_speed: f32,
     pub going_down_speed: f32,
@@ -33,7 +34,7 @@ pub struct Physical {
 }
 
 ///CreateInstance82BAF980 zeros mode8, distance12 and descending_time16.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct State {
     mode: u32,
     height: f32,

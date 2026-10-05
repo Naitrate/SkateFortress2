@@ -76,6 +76,7 @@ impl Condition {
 }
 
 /// Original MotionGraph CA4 flags, distinct from physical balance mode.
+#[derive(Clone)]
 pub struct Flags {
     pub anticipating: bool,
     pub landing: bool,
@@ -106,7 +107,7 @@ pub struct Physical {
 }
 
 /// Original instance scalar8 (height or countdown) and byte12 (timer complete).
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct State {
     pub(super) value: f32,
     pub(super) complete: bool,

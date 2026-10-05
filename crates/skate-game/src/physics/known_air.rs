@@ -12,6 +12,7 @@ use skate_core::air::known::{
     KnownAirSettings, KnownAirState, KnownAirWipeoutRequest, KnownAirWipeoutSettings,
 };
 use skate_data::collections::Collections;
+#[derive(Clone)]
 pub(crate) struct KnownAir {
     pub state: KnownAirState,
     settings: KnownAirSettings,

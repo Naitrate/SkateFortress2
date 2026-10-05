@@ -3,6 +3,7 @@
 use super::*;
 use skate_core::player::post_input::*;
 
+#[derive(Clone)]
 pub(crate) struct PostInputState {
     pub jump_reference: [u32; 4],
     pub jump_fix_frames: u32,

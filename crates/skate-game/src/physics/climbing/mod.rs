@@ -19,7 +19,7 @@ use skate_core::{
     player::state::PhysicalStateId,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct Runtime {
     clips: Option<Clips>,
     indices: Vec<usize>,
@@ -35,6 +35,7 @@ enum Phase {
     Mantle,
     Settle,
 }
+#[derive(Clone)]
 struct Attached {
     phase: Phase,
     time: f32,

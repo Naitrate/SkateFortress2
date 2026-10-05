@@ -9,7 +9,7 @@ use skate_core::{
 };
 type V = [f32; 4];
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct GrindTrick {
     velocity: V,              //48: authored motion translated to world at60Hz
     contact_free_frames: u32, //64

@@ -36,6 +36,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct GroundRuntime {
     retained_board_normal: [f32; 4],
     wall_ride: WallRideSettings,

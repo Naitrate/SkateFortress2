@@ -7,12 +7,13 @@ use skate_core::animation::{
     playback_tree::{Evaluation, PlaybackTree, PoseCommand},
 };
 
+#[derive(Clone)]
 struct Channel {
     name: String,
     tree: PlaybackTree,
     playback: ChannelPlayback,
 }
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct MotionChannels {
     channels: Vec<Channel>,
 }
@@ -214,7 +215,7 @@ impl MotionChannels {
 }
 
 ///FakieHeadChannel82BAC778, instance82BACA30; both instance fields seed0.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FakieHead {
     value: f32,
     was_fakie: bool,

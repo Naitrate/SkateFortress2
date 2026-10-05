@@ -9,7 +9,7 @@ struct File {
     clips: Vec<Clip>,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 pub(super) struct Clip {
     pub name: String,
     pub fps: f32,
@@ -18,6 +18,7 @@ pub(super) struct Clip {
     pub frames: Vec<Vec<[f32; 10]>>,
 }
 
+#[derive(Clone)]
 pub(super) struct Clips {
     pub reach: Clip,
     pub mantle: Clip,

@@ -18,6 +18,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct PhysicsSettings {
     pub step: BoardStepSettings,
     pub masses: [RetailBodyMassProperties; 7],

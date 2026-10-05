@@ -15,7 +15,7 @@ pub struct Settings {
     pub automatic_delta: f32,
     pub maximum_landing_speed: f32,
 }
-#[derive(Default, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct State {
     pub output: Option<UpdateOutput>,
     pub time_to_land: f32,

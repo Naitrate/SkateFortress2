@@ -12,6 +12,7 @@ use skate_core::player::offboard::{
 };
 use skate_data::collections::Collections;
 pub(crate) use update::update;
+#[derive(Clone)]
 pub(crate) struct BipedAir {
     pub state: State,
     checks: Settings,

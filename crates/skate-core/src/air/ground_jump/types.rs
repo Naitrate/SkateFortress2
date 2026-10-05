@@ -11,6 +11,7 @@ pub struct GroundJumpMode {
     pub minimum_height_68: f32, //JumpMinHeight, metres
     pub maximum_height: f32,    //JumpMaxHeight72, metres
 }
+#[derive(Clone)]
 pub struct GroundJumpSettings {
     pub vertical_response: PointGraph<16>,      //physics_jump0
     pub y_scalar_vs_normal_y: PointGraph<8>,    //128

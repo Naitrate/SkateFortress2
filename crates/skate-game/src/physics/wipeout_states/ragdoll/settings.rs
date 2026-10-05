@@ -3,6 +3,7 @@ use skate_core::physics::contact::RetailContactMaterial;
 use skate_data::{collections::Collections, physics_skeleton::PhysicsSkeleton};
 use std::path::Path;
 
+#[derive(Clone)]
 pub(super) struct Settings {
     pub normal_limits: [[u32; 4]; 22],
     pub ragdoll_limits: [[u32; 4]; 22],

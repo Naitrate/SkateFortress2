@@ -6,6 +6,7 @@ use skate_core::{
     player::wipeout_state::State,
 };
 
+#[derive(Clone)]
 pub(crate) struct Prediction {
     pub result: QueryResult,
     pending: Option<(QueryResult, Trajectory, bool)>,

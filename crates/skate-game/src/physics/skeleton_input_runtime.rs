@@ -51,6 +51,7 @@ pub(crate) struct SkeletonPoseInput<'a> {
     pub actions: &'a mut dyn ActionMap,
 }
 
+#[derive(Clone)]
 pub(crate) struct SkeletonInputRuntime {
     ///Skeleton16128, read from the actual deck before ProcessAnimAttributes.
     pub deck_velocity: [f32; 4],

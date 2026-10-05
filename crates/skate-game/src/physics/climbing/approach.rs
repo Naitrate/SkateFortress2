@@ -1,6 +1,7 @@
 //! Airborne reach is a presentation overlay. Stock graphs, gravity and collisions
 //! retain ownership until both arm targets are physically within reach.
 use super::*;
+#[derive(Clone)]
 pub(super) struct Approach {
     ledge: ledge::Ledge,
     pub(super) weight: f32,

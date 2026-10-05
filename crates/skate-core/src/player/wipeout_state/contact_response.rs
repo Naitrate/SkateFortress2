@@ -26,6 +26,7 @@ pub struct ContactResponseOutput {
     /// Second helper's retained byte73; selects caller's collision mode9.
     pub material11_active_73: bool,
 }
+#[derive(Clone)]
 pub struct ContactResponse {
     material10: material10::Response,
     material11: material11::Response,

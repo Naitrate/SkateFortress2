@@ -24,12 +24,14 @@ pub struct SkeletonDriveSettings {
     /// LOCAL and LOCAL_ROOT collision strengths before use in Update.
     pub collision_strength: [[f32; 2]; ANIMATION_PART_COUNT],
 }
+#[derive(Clone)]
 pub struct BoneDrives {
     pub parent: [usize; 2],
     pub active: [bool; 2],
     pub frames: [RetailDriveFrames; 2],
     pub dynamics: BoneDriveDynamics,
 }
+#[derive(Clone)]
 pub struct SkeletonDrives {
     pub targets: SkeletonTargets,
     pub bones: [Option<BoneDrives>; ANIMATION_PART_COUNT],
@@ -42,6 +44,7 @@ pub enum SkeletonDriveIdentity {
     Target(usize),
     Bone { part: usize, channel: usize },
 }
+#[derive(Clone)]
 pub struct SkeletonDriveBatch {
     pub rows: Vec<RetailDriveRows>,
     pub identities: Vec<SkeletonDriveIdentity>,

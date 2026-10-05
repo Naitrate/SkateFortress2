@@ -1,0 +1,13 @@
+# tf2-skate: the physics uses f32::mul_add everywhere (fused, to match the
+# Xbox 360's fmadds). Baseline x86-64 has no FMA instruction, so each one
+# became a libm fmaf call: ~40% of a skater step. x86-64-v3 (Haswell, 2013+)
+# has FMA; results are bit-identical, only faster.
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "target-cpu=x86-64-v3"]
+
+# The TF2 mod's Windows library (build-skate-lib-windows.sh) and the same
+# FMA reasoning.
+[target.x86_64-pc-windows-gnu]
+rustflags = ["-C", "target-cpu=x86-64-v3"]
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-cpu=x86-64-v3"]

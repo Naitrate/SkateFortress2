@@ -27,6 +27,7 @@ impl GrindContext {
         }
     }
 }
+#[derive(Clone)]
 pub(super) struct Settings {
     limits: GrindAssistLimits,
     height: PointGraph<8>,

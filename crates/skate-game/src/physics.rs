@@ -94,7 +94,7 @@ use skate_core::{
 };
 
 
-#[derive(Resource)]
+#[derive(Clone, Resource)]
 pub(crate) struct GamePhysics {
     pub(crate) network_proxies: network::Proxies,
     pub(crate) network_active: bool,
@@ -123,6 +123,7 @@ pub(crate) struct GamePhysics {
 
 /// Cross-phase records for the current fixed tick. Subsystems retain their
 /// private native-shaped storage; only these buffers cross the coordinator.
+#[derive(Clone)]
 pub(crate) struct SimulationExchange {
     commands: skate_core::physics::phase::PhysicsCommandBuffer,
     events: skate_core::physics::phase::PhysicsEventBuffer,
@@ -258,14 +259,30 @@ impl GamePhysics {
         terrain: ground::Terrain,
         map: Option<&skate_data::skate_map::SkateMap>,
     ) -> Result<Self, String> {
-        Self::load_world_difficulty(asset_root, terrain, map, crate::difficulty::Difficulty::Easy)
+        Self::load_world_difficulty(asset_root, terrain, map, crate::difficulty::Difficulty::Easy, None)
     }
 
     pub fn load_with_difficulty(asset_root: &std::path::Path, map: Option<&skate_data::skate_map::SkateMap>, difficulty: crate::difficulty::Difficulty) -> Result<Self, String> {
-        Self::load_world_difficulty(asset_root, ground::Terrain::Course, map, difficulty)
+        Self::load_world_difficulty(asset_root, ground::Terrain::Course, map, difficulty, None)
     }
 
-    fn load_world_difficulty(asset_root: &std::path::Path, terrain: ground::Terrain, map: Option<&skate_data::skate_map::SkateMap>, difficulty: crate::difficulty::Difficulty) -> Result<Self, String> {
+    /// The map's collision world, to build once and hand to many skaters
+    /// (see `load_with_shared_world`).
+    #[allow(dead_code)]
+    pub(crate) fn map_world(asset_root: &std::path::Path, map: &skate_data::skate_map::SkateMap) -> Result<BoardWorld, String> {
+        let data = crate::custom_difficulty::load_collections(asset_root)?;
+        let settings = PhysicsSettings::load(&data)?;
+        crate::skate_world::collision_world(map, settings.floor_material)
+    }
+
+    /// Like `load_with_difficulty`, with `world` (from `map_world` on the same
+    /// map, via `BoardWorld::share`) instead of rebuilding the map's collision.
+    #[allow(dead_code)]
+    pub(crate) fn load_with_shared_world(asset_root: &std::path::Path, map: &skate_data::skate_map::SkateMap, difficulty: crate::difficulty::Difficulty, world: BoardWorld) -> Result<Self, String> {
+        Self::load_world_difficulty(asset_root, ground::Terrain::Course, Some(map), difficulty, Some(world))
+    }
+
+    fn load_world_difficulty(asset_root: &std::path::Path, terrain: ground::Terrain, map: Option<&skate_data::skate_map::SkateMap>, difficulty: crate::difficulty::Difficulty, prebuilt: Option<BoardWorld>) -> Result<Self, String> {
         let data = crate::custom_difficulty::load_collections(asset_root)?;
         let settings = PhysicsSettings::load(&data)?;
         let animation_profile = animation_phase::AnimationProfile::load(&data, difficulty.profile_key())?;
@@ -299,9 +316,10 @@ impl GamePhysics {
             settings.step.simulation,
             BoardMotion::Active,
         );
-        let world = match map {
-            Some(map) => crate::skate_world::collision_world(map, settings.floor_material)?,
-            None => terrain.world(settings.floor_material),
+        let world = match (prebuilt, map) {
+            (Some(world), _) => world,
+            (None, Some(map)) => crate::skate_world::collision_world(map, settings.floor_material)?,
+            (None, None) => terrain.world(settings.floor_material),
         };
         let grind_world = std::sync::Arc::new(if map.is_none() && terrain == ground::Terrain::Course {
             crate::grind_world::StaticProvider::authored(&crate::grind_world::test_rails())?
@@ -463,6 +481,42 @@ pub(crate) fn advance(
     if let (Some(performance), Some(timer)) = (performance.as_mut(), timer) {
         performance.physics(timer.elapsed());
     }
+}
+
+/// One fixed tick without Bevy scheduling, in FixedUpdate order:
+/// controls::sample, then advance. The input publication step is the caller's.
+/// Used by the TF2 sidecar, which owns one runtime set per remote skater.
+pub(crate) fn step_headless(
+    physics: &mut GamePhysics,
+    skater: &mut SkaterRuntime,
+    controls: &mut PlayerControls,
+    graphs: &crate::graph_runtime::StockGraphs,
+    input: skate_core::input::tick::TickInput,
+    camera: &mut crate::camera::CameraRuntime,
+) -> Result<(), String> {
+    if physics.failed {
+        return Err("Skater simulation already failed".into());
+    }
+    let mut map = input.actions();
+    controls.update_for_physics(&mut map, physics, skater, camera)?;
+    controls.publish_gestures(
+        physics.animation_profile.physics_mode,
+        skater.player_input.physical.state.state_16,
+    );
+    let mut actions = input.actions();
+    let result = frame::advance(
+        physics,
+        skater,
+        controls,
+        graphs,
+        &mut actions,
+        input.controller_available(),
+        camera,
+    );
+    if result.is_err() {
+        physics.failed = true;
+    }
+    result
 }
 
 impl GamePhysics {

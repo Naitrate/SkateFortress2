@@ -26,6 +26,7 @@ pub struct PhysicalConditions {
 
 /// Runtime owner for the recovered ActionGraph intent path. Conditions read
 /// current published physics and intent values when the graph evaluates them.
+#[derive(Clone)]
 pub struct ActionHost {
     pub instances: ActionInstances,
     pub action_intents: IntentMap,

@@ -9,6 +9,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 type V = [f32; 4];
+#[derive(Clone)]
 pub(crate) struct RevertState {
     speed: PointGraph<8>,
     tolerance: PointGraph<4>,

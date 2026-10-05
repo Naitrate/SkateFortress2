@@ -49,7 +49,7 @@ impl Operation {
 }
 
 /// Per behavior instance, never shared between different graph nodes.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct State {
     fade: Option<Fade>,
     height: Option<f32>,

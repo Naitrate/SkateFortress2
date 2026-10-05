@@ -5,6 +5,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct Settings {
     pub recovery: recovery::Settings,
     pub remove_target_time: f32,

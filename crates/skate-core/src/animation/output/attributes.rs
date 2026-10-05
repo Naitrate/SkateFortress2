@@ -80,7 +80,7 @@ impl MotionGraphAttribute {
 /// Active entries plus retained slots model native end=begin list reset.
 /// Capacity allocation policy is host-owned; active ordering and union-lane
 /// preservation follow native append/copy semantics. No sorting/deduplication.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct PacketAttributes {
     slots: Vec<AnimationAttribute>,
     active_len: usize,

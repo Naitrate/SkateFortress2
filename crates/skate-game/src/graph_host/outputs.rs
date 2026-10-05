@@ -114,7 +114,7 @@ impl PriorMotionState {
 /// Tick-scoped graph diagnostics. Native graph failures are actionable, but a
 /// long-lived host must not grow an error vector without bound when an authored
 /// graph repeatedly reaches an unsupported node.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct GraphDiagnostics {
     messages: Vec<String>,
     overflowed: bool,

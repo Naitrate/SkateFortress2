@@ -10,7 +10,7 @@ use skate_core::input::{
 };
 use std::collections::BTreeMap;
 
-#[derive(Resource)]
+#[derive(Clone, Resource)]
 pub(crate) struct PlayerControls {
     pub controller: DerivedControllerInput,
     pub offboard_direction: Option<[f32; 4]>,

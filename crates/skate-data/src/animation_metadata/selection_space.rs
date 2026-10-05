@@ -3,7 +3,7 @@ use super::validate_name;
 use crate::abin::{Error, Reader, RecordHeader, Result};
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SelectionParameterMetadata {
     pub name: String,
@@ -12,13 +12,13 @@ pub struct SelectionParameterMetadata {
     pub minimum_bits: u32,
     pub maximum_bits: u32,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SelectionCandidateMetadata {
     pub child: String,
     pub value_bits: Vec<u32>,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SelectionSpaceMetadata {
     pub name: String,

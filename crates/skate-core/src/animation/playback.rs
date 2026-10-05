@@ -38,6 +38,7 @@ pub struct PlaybackRequest {
 
 /// Values published by the actual skater-animation/physical interfaces. The
 /// no-board bit is PhysOut+72's byte311, not a contact-derived guess.
+#[derive(Clone)]
 pub struct PlaybackContext {
     pub is_switch: Option<bool>,
     pub is_mirrored: Option<bool>,

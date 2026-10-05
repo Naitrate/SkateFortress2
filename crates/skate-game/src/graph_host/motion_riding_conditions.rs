@@ -118,6 +118,13 @@ fn slope(up_y: f32) -> f32 {
 #[derive(Debug)]
 pub struct MotionRandom(Mutex<[u32; 8]>);
 
+/// A copy continues the same sequence (client prediction rewinds skaters).
+impl Clone for MotionRandom {
+    fn clone(&self) -> Self {
+        Self(Mutex::new(*self.0.lock().unwrap_or_else(|e| e.into_inner())))
+    }
+}
+
 impl MotionRandom {
     pub fn new() -> Self {
         //FullMotionGraph6000/6004 start at zero, then6008..6031 receive the

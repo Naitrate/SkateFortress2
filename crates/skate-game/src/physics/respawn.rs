@@ -13,11 +13,13 @@ use skate_core::{
 use skate_data::collections::Collections;
 use super::offboard::contact_queries::Probe;
 
+#[derive(Clone)]
 pub(super) struct Runtime {
     history: History,
     settings: Settings,
     measurements: i32,
 }
+#[derive(Clone)]
 struct Settings {
     height: f32,
     radius: f32,

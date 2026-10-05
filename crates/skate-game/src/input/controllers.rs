@@ -18,7 +18,7 @@ pub(crate) enum ControllerStatus {
     Unavailable(DeviceError),
 }
 
-#[derive(Resource)]
+#[derive(Clone, Resource)]
 pub(crate) struct ControllerInput {
     raw: [RawInput; DEVICE_SLOTS],
     cache: [[HistoryRecord; DEVICE_SLOTS]; 2],
@@ -82,7 +82,7 @@ impl ControllerInput {
         GameplayActions::from_pad(&self.pads[device])
     }
 
-    pub(super) fn tick_input(&self) -> TickInput {
+    pub(crate) fn tick_input(&self) -> TickInput {
         let device = self
             .status
             .iter()
@@ -100,7 +100,7 @@ impl ControllerInput {
     /// TU3 8296D288/8296D0D0: write the inactive cache, publish one four-device
     /// batch. Even an unchanged platform packet is sampled; packet-number
     /// deduplication would alter native Pad edge/repeat behavior.
-    pub(super) fn collect(&mut self, samples: [Result<DevicePacket, DeviceError>; DEVICE_SLOTS]) {
+    pub(crate) fn collect(&mut self, samples: [Result<DevicePacket, DeviceError>; DEVICE_SLOTS]) {
         let next = self.active ^ 1;
         for (device, sample) in samples.into_iter().enumerate() {
             match sample {
@@ -133,7 +133,7 @@ impl ControllerInput {
     /// TU3 82699230 drains first, then updates each Pad once. The game owns
     /// this snapshot for subsequent consumers; Derived timers require the
     /// actual actor timestep and state flags and are not driven by render dt.
-    pub(super) fn publish_actions(&mut self) -> bool {
+    pub(crate) fn publish_actions(&mut self) -> bool {
         self.tick = self.tick.wrapping_add(1);
         if !self.history.drain_to_latest(&mut self.pads) {
             return false;

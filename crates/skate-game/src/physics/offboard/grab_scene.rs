@@ -11,6 +11,7 @@ pub(crate) struct MeshAssembly {
     pub assembly: u32,
 }
 
+#[derive(Clone)]
 pub(crate) struct Registry {
     pub objects: native::Registry,
     mesh_assemblies: Vec<MeshAssembly>,

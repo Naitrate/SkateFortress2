@@ -115,16 +115,23 @@ pub trait ExternalQueries: Send + Sync {
     fn nearby(&self, center: Vector3, radius: f32) -> Vec<[Vector3; 3]>;
 }
 
-/// World geometry remains in supplied order. Each query reuses output storage;
-/// the returned contacts are valid until the next mutable call.
-pub struct BoardWorld {
+/// The immutable part of a world: triangles and their query acceleration.
+/// Shared between BoardWorlds (one per skater) through an Arc.
+struct WorldGeometry {
     triangles: Vec<WorldTriangle>,
-    external: Option<std::sync::Arc<dyn ExternalQueries>>,
     triangle_bounds: Vec<Bounds>,
     query_metadata: Option<QueryMetadata>,
     query_index: query_index::QueryIndex,
     maximum_fatness: f32,
     maximum_triangle_margin: f32,
+}
+
+/// World geometry remains in supplied order. Each query reuses output storage;
+/// the returned contacts are valid until the next mutable call.
+#[derive(Clone)]
+pub struct BoardWorld {
+    geometry: std::sync::Arc<WorldGeometry>,
+    external: Option<std::sync::Arc<dyn ExternalQueries>>,
     contacts: Vec<BoardCollision>,
     buffer: ContactBuffer,
 }
@@ -161,14 +168,20 @@ impl BoardWorld {
                 span * (2. * broadphase::THIN_MARGIN)
             })
             .fold(0., f32::max);
-        Self {
+        Self::from_geometry(std::sync::Arc::new(WorldGeometry {
             triangles,
-            external: None,
             triangle_bounds,
             query_metadata: None,
             query_index: query_index::QueryIndex::default(),
             maximum_fatness,
             maximum_triangle_margin,
+        }))
+    }
+
+    fn from_geometry(geometry: std::sync::Arc<WorldGeometry>) -> Self {
+        Self {
+            geometry,
+            external: None,
             contacts: Vec::new(),
             buffer: ContactBuffer {
                 count: 0,
@@ -190,13 +203,21 @@ impl BoardWorld {
     ) -> Result<Self, &'static str> {
         metadata.validate(&triangles)?;
         let mut world = Self::new(triangles);
-        world.query_index = query_index::QueryIndex::new(&metadata.meshes);
-        world.query_metadata = Some(metadata);
+        let geometry = std::sync::Arc::get_mut(&mut world.geometry).expect("just built");
+        geometry.query_index = query_index::QueryIndex::new(&metadata.meshes);
+        geometry.query_metadata = Some(metadata);
         Ok(world)
     }
 
+    /// Another world over the same geometry, with its own query state and no
+    /// external queries. Many simulations on one map then share one copy of
+    /// its triangles and acceleration structures.
+    pub fn share(&self) -> Self {
+        Self::from_geometry(self.geometry.clone())
+    }
+
     pub fn query_metadata(&self) -> Result<&QueryMetadata, &'static str> {
-        self.query_metadata
+        self.geometry.query_metadata
             .as_ref()
             .ok_or("Canonical world has no authored query metadata")
     }
@@ -212,7 +233,7 @@ impl BoardWorld {
     }
 
     pub fn triangles(&self) -> &[WorldTriangle] {
-        &self.triangles
+        &self.geometry.triangles
     }
 
     /// Board wheel segments use zero query radius; rounded world triangles
@@ -320,7 +341,7 @@ impl BoardWorld {
             .iter()
             .map(|v| {
                 primitive_bounds(v.primitive)
-                    .map(|b| conservative_bounds(b, padding + self.maximum_fatness))
+                    .map(|b| conservative_bounds(b, padding + self.geometry.maximum_fatness))
             })
             .collect();
         let bounds: Option<Vec<_>> = volume_bounds.iter().copied().collect();
@@ -333,10 +354,10 @@ impl BoardWorld {
             output.extend(records.iter().map(collision_from_record));
         };
         for index in ranges.into_iter().flatten() {
-            let entry = &self.triangles[index];
+            let entry = &self.geometry.triangles[index];
             for (volume, volume_bounds) in volumes.iter().zip(&volume_bounds) {
-                if self.query_metadata.is_some()
-                    && volume_bounds.is_some_and(|b| !self.triangle_bounds[index].overlaps(b))
+                if self.geometry.query_metadata.is_some()
+                    && volume_bounds.is_some_and(|b| !self.geometry.triangle_bounds[index].overlaps(b))
                 {
                     continue;
                 }

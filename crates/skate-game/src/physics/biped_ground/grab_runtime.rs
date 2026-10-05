@@ -10,7 +10,7 @@ use skate_core::player::offboard::{
     ground_query::QueryContext,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct Owner {
     queries: Vec<Query>,
     query_result: Option<Vec<Record>>,

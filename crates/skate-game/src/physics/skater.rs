@@ -25,7 +25,7 @@ use skate_core::physics::{
 use skate_data::collections::Collections;
 use std::path::Path;
 
-#[derive(Resource)]
+#[derive(Clone, Resource)]
 pub(crate) struct SkaterRuntime {
     pub scoring: crate::scoring_runtime::Runtime,
     pub climbing: super::climbing::Runtime,
@@ -56,6 +56,9 @@ pub(crate) struct SkaterRuntime {
     pub boneless: super::boneless::Boneless,
     pub handplant: super::handplant::Handplant,
     pub wipeout: super::wipeout::Wipeout,
+    /// Host-requested bail (e.g. the TF2 sidecar's deep water), raised as a
+    /// stock contact-force request where postphysics checks raise theirs.
+    pub external_wipeout: bool,
     pub wipeout_state: super::wipeout_states::WipeoutState,
     pub(super) respawn: super::respawn::Runtime,
     pub teleport_state: super::teleport_state::Runtime,
@@ -156,8 +159,11 @@ impl SkaterRuntime {
         source: Option<std::sync::Arc<crate::skater_animation::AnimationSource>>,
     ) -> Result<Self, String> {
         let data = crate::custom_difficulty::load_collections(asset_root)?;
-        let banks = skate_data::animation_banks::AnimationBanks::load(asset_root)?;
-        let animation_metadata = banks.metadata()?;
+        // A shared source already holds the banks; don't load them again.
+        let animation_metadata = match &source {
+            Some(source) => source.metadata()?,
+            None => skate_data::animation_banks::AnimationBanks::load(asset_root)?.metadata()?,
+        };
         // The host's current character is a custom skater with no pro selector
         // or equipped physical hat. These are profile choices, not force values.
         let mut animation = match source {
@@ -297,6 +303,7 @@ impl SkaterRuntime {
             boneless: super::boneless::Boneless::load(&data)?,
             handplant: super::handplant::Handplant::load(&data)?,
             wipeout: super::wipeout::Wipeout::load(&data)?,
+            external_wipeout: false,
             wipeout_state,
             teleport_state: super::teleport_state::Runtime::new(
                 #[cfg(test)]

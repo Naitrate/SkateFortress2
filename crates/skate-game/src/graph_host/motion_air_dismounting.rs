@@ -1,7 +1,7 @@
 //! TU3 AirDismounting Begin82BB93E0, Update82BB94C0, empty End82B61BB8.
 use skate_core::animation::{output::attributes::AnimationAttribute, skeleton_input::name::encode};
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(super) struct State {
     frames: i32,
 }

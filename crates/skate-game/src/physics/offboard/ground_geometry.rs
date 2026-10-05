@@ -10,6 +10,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct State {
     pending: Option<(GroundQueryPacket, [Option<LineHit>; 7])>,
     collision_offset: f32,

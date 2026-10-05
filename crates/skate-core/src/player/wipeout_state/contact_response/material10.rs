@@ -5,6 +5,7 @@ use crate::{physics::skeleton_body::SkeletonBody, player::wipeout_state::math::*
 const STEP: f32 = f32::from_bits(0x3c88_8889); //820849C8
 const PHASE_DURATION: f32 = f32::from_bits(0x3d07_2b02); //8208F5C0:0.033
 
+#[derive(Clone)]
 pub(super) struct Response {
     previous_velocity: V, //16
     normal: V,            //32

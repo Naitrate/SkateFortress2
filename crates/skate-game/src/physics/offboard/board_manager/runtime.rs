@@ -14,6 +14,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct LiveState {
     pub volumes: VolumeFlags,
     alignment: Alignment,

@@ -12,7 +12,7 @@ pub struct CentreOfMassOutput {
     pub position: [f32; 4],
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct CentreOfMassFilter {
     velocity: [f32; 4],
     position: [f32; 4],

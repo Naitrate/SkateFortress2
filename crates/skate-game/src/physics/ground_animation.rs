@@ -10,7 +10,7 @@ use skate_core::{
     player::input_phase::{AirOutputFields, ProcessedPhysicsInput},
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct GroundAnimationRuntime {
     pub jump: GroundJump,          //48..68
     pub launched: bool,            //80, reset at each update

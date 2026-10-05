@@ -7,6 +7,7 @@ use crate::{air::{body_spin::{self, BodySpinState}, reckoning::AirState}, math::
     point_graph::PointGraph,
     riding::{ground_orientation::GroundOrientation, reckoning_frames::ReckoningFrames}};
 
+#[derive(Clone)]
 pub struct Settings {
     pub ground_normal_smoothing: V,
     /// Stock schema: layout800 TiltVsRotGround,672 TiltVsSlopeGround.

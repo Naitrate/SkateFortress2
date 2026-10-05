@@ -18,6 +18,7 @@ use skate_core::{
         ground_query::GroundQueryScene,
     },
 };
+#[derive(Clone)]
 pub(crate) struct AirSelector {
     pub core: core::Selector,
     pub settings: Settings,

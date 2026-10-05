@@ -10,6 +10,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct AnimationFeedback {
     settings: turn_conditioner::Settings,
     bump_settings: ground_acceleration::Settings,

@@ -1,6 +1,7 @@
 //! SkateboardWobble constructor82BF2E48, trigger82BF2F18, update82BF2FB8.
 use crate::point_graph::PointGraph;
 
+#[derive(Clone)]
 pub struct Settings {
     pub takeoff_tilt: PointGraph<8>,
     pub landing_tilt: PointGraph<8>,
@@ -8,6 +9,7 @@ pub struct Settings {
     pub landing_squish: PointGraph<8>,
     pub maximum_time: f32,
 }
+#[derive(Clone)]
 pub struct Wobble {
     pub active: bool,
     pub landing: bool,

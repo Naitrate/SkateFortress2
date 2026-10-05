@@ -9,6 +9,7 @@ use super::{
     skeleton_root::{SkeletonRootFrames, orthonormalize},
 };
 
+#[derive(Clone)]
 pub struct SkeletonBoardFrames {
     pub physical_board: Transform,
     pub skate_root: Transform,

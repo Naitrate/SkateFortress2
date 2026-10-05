@@ -251,7 +251,7 @@ pub(crate) fn bounds(p: ContactPrimitive) -> (Vec3, f32) {
         }
     }
 }
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct Proxies {
     pub bodies: Vec<BodySnapshot>,
     pub volumes: Vec<BoardWorldVolume>,

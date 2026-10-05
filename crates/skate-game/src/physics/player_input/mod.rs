@@ -29,6 +29,7 @@ pub(crate) enum InputStage {
     ThroughTeleport,
     AfterTeleport(input_phase::InputContinuation),
 }
+#[derive(Clone)]
 pub(crate) struct PlayerInputRuntime {
     pub player: PlayerInputState,
     pub physical: PhysicalPlayerInput,

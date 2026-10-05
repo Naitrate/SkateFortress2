@@ -7,6 +7,7 @@ use skate_core::{
 use skate_data::collections::Collections;
 use std::path::Path;
 
+#[derive(Clone)]
 pub(crate) struct GestureInput {
     recognizers: Vec<(usize, Recognizer)>,
     maximum_misses: [u8; 2],

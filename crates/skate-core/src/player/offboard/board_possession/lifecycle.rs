@@ -1,5 +1,6 @@
 use super::{*,math::*};
 use crate::point_graph::PointGraph;
+#[derive(Clone)]
 pub struct Settings {
     pub hide_distance:f32,pub hide_offset:f32,pub return_distance:f32,pub mounted_return_distance:f32,
     pub mounting_time:f32,pub retrieval_time:PointGraph<8>,pub retrieval_weight:PointGraph<8>,

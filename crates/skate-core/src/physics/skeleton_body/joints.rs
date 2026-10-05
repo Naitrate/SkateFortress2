@@ -50,6 +50,7 @@ pub struct SkeletonJoint {
     pub frames: RetailJointFramesRaw,
 }
 
+#[derive(Clone)]
 pub struct SkeletonJoints {
     pub records: [SkeletonJoint; JOINT_COUNT],
 }

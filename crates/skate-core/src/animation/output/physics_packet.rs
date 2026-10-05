@@ -8,6 +8,7 @@ use crate::animation::commands::{
 };
 
 /// Optional object at SkaterAnim+15104. The original class name is unresolved.
+#[derive(Clone)]
 pub struct AnimationSignal {
     pub name_hash: u32,
     pub active: u8,
@@ -15,6 +16,7 @@ pub struct AnimationSignal {
 
 /// Fields read or consumed from the concrete native SkaterAnim. Other object
 /// fields remain with their owners. The two unknown requests are NOT push flags.
+#[derive(Clone)]
 pub struct SkaterPublicationState {
     /// Native packed flags+15180 bits31,30,29,28 respectively.
     pub orientation_bit31: bool,
@@ -43,6 +45,7 @@ pub struct ActorPoseBuffers {
 /// Physics-packet-owned arrays are separate from the animation allocations.
 /// Count is packet+10380, which native publication reads without rewriting.
 /// Unlisted packet fields must be preserved by the surrounding packet owner.
+#[derive(Clone)]
 pub struct PhysicsPosePacket {
     pub bone_count: u32,
     pub hierarchy: Vec<NativeMatrix>,

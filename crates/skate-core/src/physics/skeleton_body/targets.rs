@@ -18,6 +18,7 @@ pub const TARGET_PARTS: [usize; TARGET_COUNT] = [23, 0, 24, 25];
 pub(super) const HARD_VELOCITY: f32 = f32::from_bits(0x4415_FFFF);
 pub(super) const HARD_STRENGTH: f32 = f32::from_bits(0x470C_9FFF);
 
+#[derive(Clone)]
 pub struct SkeletonTargets {
     pub bodies: [BodySnapshot; TARGET_COUNT],
     pub frames: [RetailDriveFrames; TARGET_COUNT],

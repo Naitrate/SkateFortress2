@@ -48,6 +48,7 @@ pub(crate) struct Publication {
     pub scoring: Option<Components>,
 }
 
+#[derive(Clone)]
 pub(crate) struct Chromosome {
     history: std::collections::VecDeque<ApproachPose>,
     saved: ApproachPose,

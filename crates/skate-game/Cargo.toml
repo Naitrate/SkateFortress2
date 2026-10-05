@@ -14,6 +14,10 @@ path = "src/multiplayer_main.rs"
 test = false
 
 [[bin]]
+name = "skate3-sidecar"
+path = "src/sidecar_main.rs"
+
+[[bin]]
 name = "skate3-custom-models"
 path = "src/custom_models_main.rs"
 test = false
@@ -35,6 +39,8 @@ image = { version = "=0.25.10", default-features = false, features = ["png", "jp
 skate-mods = { path = "../skate-mods" }
 skate-dynamics = { path = "../skate-dynamics" }
 gltf = { version = "=1.4.1", default-features = true }
+lzma-rs = "0.3"
+flate2 = "=1.1.10"
 
 [dev-dependencies]
 naga = { version = "=27.0.3", features = ["wgsl-in"] }

@@ -4,6 +4,7 @@ use super::{
     skeleton_animation_record::{AnimationPartTransform, IDENTITY, compose_affine},
 };
 
+#[derive(Clone)]
 pub struct SkeletonMotion {
     ///Skeleton12048,12112,12176. Later skeleton modes may set the next frame.
     pub trajectory: AnimationPartTransform,

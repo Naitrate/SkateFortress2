@@ -8,6 +8,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct State {
     //82BDE158..17C copies mapped12624 here only when2484bit0 is clear.
     //This must never alias physical_board12496 or be reset on each update.

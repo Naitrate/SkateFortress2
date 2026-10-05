@@ -5,6 +5,7 @@ use skate_core::physics::{
     skeleton_body::SkeletonPhysicalRecord,
 };
 use skate_data::collections::Collections;
+#[derive(Clone)]
 pub(crate) struct FootPhysicalOutputs {
     state: FootPhysicalState,
     settings: FootPhysicalSettings,

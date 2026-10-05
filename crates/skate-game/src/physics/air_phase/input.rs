@@ -9,6 +9,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct AirSettings {
     pub state: PhysicsAirSettings,
     pub steering_blend: f32,

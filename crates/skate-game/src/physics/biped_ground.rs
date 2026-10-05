@@ -9,6 +9,7 @@ pub(crate) mod services;
 pub(crate) mod sync;
 pub(crate) use lifecycle::{fill, post, publish_fields};
 use skate_core::player::offboard::{contact_toolkit, ground_entry, ground_job};
+#[derive(Clone)]
 pub(crate) struct Owner {
     pub controller: skate_core::player::offboard::controller::Controller,
     pub result: Option<skate_core::player::offboard::controller::GroundResult>,

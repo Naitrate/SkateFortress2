@@ -5,6 +5,7 @@ use super::{GamePhysics, SkaterRuntime, air_phase, plant_skeleton};
 use skate_core::point_graph::PointGraph;
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct Boneless {
     pub toe: usize,       //52
     pub anchor: [f32; 4], //64

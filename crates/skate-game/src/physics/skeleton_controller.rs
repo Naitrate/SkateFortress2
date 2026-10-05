@@ -2,6 +2,7 @@
 //! Requests82D911A8 and ascending/falling update82D91660 precede the solve.
 use skate_core::physics::skeleton_body::SkeletonCollisionMode;
 
+#[derive(Clone)]
 pub(crate) struct SkeletonControllerState {
     pub effective: u32,
     pub requested: u32,

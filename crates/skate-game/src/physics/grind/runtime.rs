@@ -4,6 +4,7 @@ use super::{Family, ManagerObservation, output, settings::Settings, state::State
 use skate_core::{physics::filtered_state::GrindState, player::input_phase::GrindOutputFields};
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct Runtime {
     pub(super) states: [State; 6],
     pub(super) active: Option<Family>,

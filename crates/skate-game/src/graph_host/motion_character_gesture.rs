@@ -40,6 +40,7 @@ pub struct GesturePublication {
     pub down: bool,
 }
 
+#[derive(Clone)]
 pub struct CharacterGesture {
     active: bool,
     stage: i32,

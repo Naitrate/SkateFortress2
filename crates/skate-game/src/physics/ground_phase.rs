@@ -29,6 +29,7 @@ pub(crate) struct GroundEdge {
     pub end: Vector3,
 }
 
+#[derive(Clone)]
 pub(crate) struct GroundLifecycle {
     pub skeleton_controller: SkeletonControllerState,
     /// Retained Skeleton lifecycle flag, also shared with teleport.

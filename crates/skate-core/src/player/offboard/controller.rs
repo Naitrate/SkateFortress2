@@ -17,6 +17,7 @@ pub type Vector = [f32; 4];
 pub type Frame = [Vector; 4];
 
 /// Validated stock physics_biped curves, supplied by the data boundary.
+#[derive(Clone)]
 pub struct Settings {
     pub movement_intent: movement_intent::Settings,
     pub movement_velocity: movement_velocity::Settings,
@@ -59,6 +60,7 @@ pub struct GroundJob {
     pub ignore_obstacle: bool,                //432
 }
 
+#[derive(Clone)]
 pub struct Controller {
     pub state: State,
     pub settings: Settings,

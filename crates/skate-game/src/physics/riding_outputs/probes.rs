@@ -13,12 +13,14 @@ use skate_core::{
     player::input_phase::ProcessedPhysicsInput,
 };
 
+#[derive(Clone)]
 pub(crate) struct BoardProbes {
     pub deck: BoardProbeState,
     pub wall: BoardProbeState,
     wall_line: Option<WheelLine>,
     pending: Option<Pending>,
 }
+#[derive(Clone)]
 struct Pending {
     deck: Option<BoardProbeHit>,
     wall: Option<Option<BoardProbeHit>>,

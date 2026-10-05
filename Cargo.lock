@@ -2128,6 +2128,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "crc"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5eb8a2a1cd12ab0d987a5d5e825195d372001a4094a0376319d5a0ad71c1ba0d"
+dependencies = [
+ "crc-catalog",
+]
+
+[[package]]
+name = "crc-catalog"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "217698eaf96b4a3f0bc4f3662aaa55bdf913cd54d7204591faa790070c6d0853"
+
+[[package]]
 name = "crc32fast"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3283,6 +3298,16 @@ checksum = "869665372263eb337b14f480cfb864b89f12eade4eb42cb415f71517b4a67572"
 dependencies = [
  "cc",
  "which",
+]
+
+[[package]]
+name = "lzma-rs"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "297e814c836ae64db86b36cf2a557ba54368d03f6afcd7d947c266692f71115e"
+dependencies = [
+ "byteorder",
+ "crc",
 ]
 
 [[package]]
@@ -4763,9 +4788,11 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "blake3",
+ "flate2",
  "gltf",
  "half",
  "image",
+ "lzma-rs",
  "naga",
  "naga_oil",
  "serde",
@@ -4809,6 +4836,27 @@ version = "0.1.0"
 dependencies = [
  "skate-net",
  "steamworks",
+]
+
+[[package]]
+name = "skate3-lib"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "blake3",
+ "flate2",
+ "gltf",
+ "half",
+ "image",
+ "libm",
+ "lzma-rs",
+ "serde",
+ "serde_json",
+ "skate-core",
+ "skate-data",
+ "skate-dynamics",
+ "skate-mods",
+ "skate-net",
 ]
 
 [[package]]

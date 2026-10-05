@@ -2,6 +2,7 @@
 //! This is the hand-held/retrieval controller. Normal riding stops it.
 use crate::player::lifecycle::{SkateboardControllerActions, SkateboardControllerFields};
 
+#[derive(Clone)]
 pub struct SkateboardController {
     /// The same mutable fields consumed by PhysicalPlayer state changes.
     pub fields: SkateboardControllerFields,

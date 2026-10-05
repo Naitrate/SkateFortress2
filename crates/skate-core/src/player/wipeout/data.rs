@@ -50,6 +50,7 @@ pub struct Mode {
     pub ground_xz: f32,
     pub bad_landing_scale: f32,
 }
+#[derive(Clone)]
 pub struct GroundSettings {
     pub vehicle_scalar: f32,
     pub vehicle_contact: f32,
@@ -73,6 +74,7 @@ pub struct GroundSettings {
     pub balance_min_speed: f32,
     pub balance_base: f32,
 }
+#[derive(Clone)]
 pub struct AirSettings {
     pub xz_trick: f32,
     pub y_trick: f32,
@@ -92,6 +94,7 @@ pub struct AirSettings {
     ///Layout0 PointNegGraph; original directly reads X16/Y48.
     pub max_landing_angle: PointGraph<8>,
 }
+#[derive(Clone)]
 pub struct Settings {
     pub ground: GroundSettings,
     pub air: AirSettings,

@@ -39,6 +39,7 @@ impl BoardMotion {
     }
 }
 
+#[derive(Clone)]
 pub struct BoardRuntime {
     bodies: [BodySnapshot; BODY_COUNT],
     mass_frames: [RetailLocalMassFrame; BODY_COUNT],

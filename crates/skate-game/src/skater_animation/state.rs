@@ -4,6 +4,7 @@ use skate_core::animation::{
     skeleton_input::name::encode,
 };
 
+#[derive(Clone)]
 pub(super) struct AnimationState {
     pub flags: u32,
     pub publication: SkaterPublicationState,

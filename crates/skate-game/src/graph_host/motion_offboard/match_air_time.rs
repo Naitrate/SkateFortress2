@@ -6,7 +6,7 @@ use skate_core::animation::{
     skeleton_input::name::encode,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct State {
     cadence_start: f32,
     duration: f32,

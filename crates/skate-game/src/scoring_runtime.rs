@@ -50,6 +50,7 @@ pub(crate) struct Frame {
     pub teleported: bool,
     pub reverting: bool,
 }
+#[derive(Clone)]
 pub(crate) struct Runtime {
     pub data: ScoringData,
     pub session: Session,

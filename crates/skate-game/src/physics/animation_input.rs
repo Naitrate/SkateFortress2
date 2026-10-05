@@ -20,6 +20,7 @@ use skate_core::{
 };
 use skate_data::{animation_frames::AnimationFrames, collections::Collections};
 
+#[derive(Clone)]
 pub(crate) struct AnimationInput {
     pub fields: ScalarAttributeInputs,
     pub extra: ExtendedAttributes,

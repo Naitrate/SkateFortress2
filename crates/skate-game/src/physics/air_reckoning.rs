@@ -10,6 +10,7 @@ use skate_core::{
 };
 use skate_data::collections::Collections;
 
+#[derive(Clone)]
 pub(crate) struct AirReckoning {
     pub state: AirState,
     settings: Settings,
