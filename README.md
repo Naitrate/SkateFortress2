@@ -166,6 +166,23 @@ you want guaranteed to grind, add `skate_rail` nodes:
 The server sends the chains to the simulation when the map loads; the console shows
 `… N rails` in the `[skate] world` line.
 
+**Test park.** `skate_park` is a skatepark for trying the mechanics: a halfpipe, a
+quarter pipe and a spine, a funbox with a ledge, ledges and manual pads, flat rails, a
+stair set with a handrail, kickers of three heights and a big drop-in for air. It's
+generated (`tools/make_skatepark.py`, into `game/mod_tf/mapsrc/skate_park.vmf`, which
+Hammer opens too) and compiled on Linux:
+
+```bash
+tools/build_maptools.sh                                   # once: Linux vbsp
+tools/make_skatepark.py
+tools/compile_map.sh game/mod_tf/mapsrc/skate_park.vmf    # -> game/mod_tf/maps/
+```
+
+Then `map skate_park` in game. `tools/compile_map.sh` works for any .vmf. It runs
+the Linux port of Valve's `vbsp` (the SDK only builds it for Windows): maps come out
+unlit (fullbright) and without visibility culling, since `vvis` and `vrad` aren't
+ported yet.
+
 ## Multiplayer
 
 The server runs every skater and has the final say. Every client needs the mod

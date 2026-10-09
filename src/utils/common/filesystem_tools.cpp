@@ -117,6 +117,11 @@ bool FileSystem_Init_Normal( const char *pFilename, FSInitType_t initType, bool 
 		FileSystem_AddSearchPath_Platform( g_pFullFileSystem, loadModuleInfo.m_GameInfoPath );
 
 		FileSystem_SetupStandardDirectories( pFilename, loadModuleInfo.m_GameInfoPath );
+		// tf2-skate: TOOLS_PRINT_SEARCH_PATHS=1 lists where content comes from.
+		if ( getenv( "TOOLS_PRINT_SEARCH_PATHS" ) )
+		{
+			g_pFullFileSystem->PrintSearchPaths();
+		}
 	}
 	else
 	{

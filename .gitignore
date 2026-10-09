@@ -595,3 +595,6 @@ __pycache__/
 *~
 .DS_Store
 *.zip
+
+# tf2-skate: built by tools/build_maptools.sh (the Linux map compiler)
+src/lib/public/linux64/fgdlib.a

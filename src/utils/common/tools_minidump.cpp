@@ -5,6 +5,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
+#ifdef _WIN32
 #include <windows.h>
 #include <dbghelp.h>
 #include "tier0/minidump.h"
@@ -59,3 +60,11 @@ void SetupToolsMinidumpHandler( ToolsExceptionHandler fn )
 	g_pCustomExceptionHandler = fn;
 	SetUnhandledExceptionFilter( ToolsExceptionFilter_Custom );
 }
+
+#else
+// tf2-skate: no minidumps in the Linux build of the map tools.
+#include "tools_minidump.h"
+void EnableFullMinidumps( bool bFull ) {}
+void SetupDefaultToolsMinidumpHandler() {}
+void SetupToolsMinidumpHandler( ToolsExceptionHandler fn ) {}
+#endif

@@ -1280,7 +1280,7 @@ void ConvertSideList( entity_t *mapent, char *key )
 					}
 
 					char szIndex[15];
-					itoa( nIndex, szIndex, 10 );
+					V_snprintf( szIndex, sizeof( szIndex ), "%d", nIndex );
 					strcat( szNewValue, szIndex );
 				}
 			}

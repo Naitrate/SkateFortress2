@@ -16,7 +16,7 @@
 #include "xbox\xbox_win32stubs.h"
 #endif
 #if defined(POSIX)
-#include "../../filesystem/linux_support.h"
+#include <glob.h>
 #include <sys/stat.h>
 #endif
 /*
@@ -1219,55 +1219,36 @@ int CScriptLib::GetFileList( const char* pDirPath, const char* pPattern, CUtlVec
 
 	_findclose( h );
 #elif defined(POSIX)
-	FIND_DATA findData;
+	// tf2-skate: glob() instead of the Windows-style FindFirstFile emulation
+	// (filesystem/linux_support.h, not in the SDK).
 	Q_FixSlashes( fullPath );
-	void *h = FindFirstFile( fullPath, &findData );
-	if ( (intp)h == -1 )
+	glob_t matches;
+	if ( glob( fullPath, 0, NULL, &matches ) != 0 )
 	{
+		globfree( &matches );
 		return 0;
 	}
-
-	do
+	for ( size_t m = 0; m < matches.gl_pathc; ++m )
 	{
-		// dos attribute complexities i.e. _A_NORMAL is 0
-		if ( bFindDirs )
-		{
-			// skip non dirs
-			if ( !( findData.dwFileAttributes & S_IFDIR ) )
-				continue;
-		}
-		else
-		{
-			// skip dirs
-			if ( findData.dwFileAttributes & S_IFDIR )
-				continue;
-		}
-
-		if ( !stricmp( findData.cFileName, "." ) )
+		struct stat statbuf;
+		if ( stat( matches.gl_pathv[m], &statbuf ) != 0 )
 			continue;
-
-		if ( !stricmp( findData.cFileName, ".." ) )
+		bool bIsDir = S_ISDIR( statbuf.st_mode );
+		if ( bFindDirs != bIsDir )
+			continue;
+		const char *pszName = V_UnqualifiedFileName( matches.gl_pathv[m] );
+		if ( !stricmp( pszName, "." ) || !stricmp( pszName, ".." ) )
 			continue;
 
 		char fileName[MAX_PATH];
 		strcpy( fileName, sourcePath );
-		strcat( fileName, findData.cFileName );
+		strcat( fileName, pszName );
 
 		int j = fileList.AddToTail();
 		fileList[j].fileName.Set( fileName );
-		struct stat statbuf;
-		if ( stat( fileName, &statbuf ) )
-#ifdef OSX
-			fileList[j].timeWrite = statbuf.st_mtimespec.tv_sec;
-#else
-			fileList[j].timeWrite = statbuf.st_mtime;
-#endif
-		else
-			fileList[j].timeWrite = 0;
+		fileList[j].timeWrite = statbuf.st_mtime;
 	}
-	while ( !FindNextFile( h, &findData ) );
-
-	FindClose( h );
+	globfree( &matches );
 
 #else
 #error

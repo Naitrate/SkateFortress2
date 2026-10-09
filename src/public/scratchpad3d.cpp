@@ -631,5 +631,11 @@ IScratchPad3D* ScratchPad3D_Create( char const *pFilename )
 	CScratchPad3D *pRet = new CScratchPad3D( pFilename, pFileSystem, true );
 	return pRet;
 }
+#else
+// tf2-skate: the Linux map tools have no 3D scratchpad (a Windows debug view).
+IScratchPad3D* ScratchPad3D_Create( char const *pFilename )
+{
+	return NULL;
+}
 #endif // POSIX
 

@@ -19,6 +19,8 @@
 #pragma warning(disable: 4244)
 #pragma warning(disable: 4530)
 
+#include <string.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <algorithm>

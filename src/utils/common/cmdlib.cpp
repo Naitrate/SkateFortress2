@@ -8,6 +8,9 @@
 // -----------------------
 // cmdlib.c
 // -----------------------
+#ifdef POSIX
+#include <unistd.h>
+#endif
 #include "tier0/platform.h"
 #ifdef IS_WINDOWS_PC
 #include <windows.h>
@@ -61,7 +64,25 @@ CUtlLinkedList<SpewHookFn, unsigned short> g_ExtraSpewHooks;
 bool g_bStopOnExit = false;
 void (*g_ExtraSpewHook)(const char*) = NULL;
 
-#if defined( _WIN32 ) || defined( WIN32 )
+#if defined( _WIN32 ) || defined( WIN32 ) || defined( POSIX )
+
+#if defined( POSIX )
+// tf2-skate: the Linux build of the map tools has no Windows console.
+typedef unsigned short WORD;
+static inline void OutputDebugString( const char * ) {}
+#include <pthread.h>
+typedef pthread_mutex_t CRITICAL_SECTION;
+static inline void InitializeCriticalSection( CRITICAL_SECTION *pCS )
+{
+	pthread_mutexattr_t attr;
+	pthread_mutexattr_init( &attr );
+	pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+	pthread_mutex_init( pCS, &attr );
+}
+static inline void EnterCriticalSection( CRITICAL_SECTION *pCS ) { pthread_mutex_lock( pCS ); }
+static inline void LeaveCriticalSection( CRITICAL_SECTION *pCS ) { pthread_mutex_unlock( pCS ); }
+#define getch getchar
+#endif
 
 void CmdLib_FPrintf( FileHandle_t hFile, const char *pFormat, ... )
 {
@@ -128,7 +149,7 @@ char* CmdLib_FGets( char *pOut, int outSize, FileHandle_t hFile )
 	return pOut;
 }
 
-#if !defined( _X360 )
+#if defined( _WIN32 ) && !defined( _X360 )
 #include <wincon.h>
 #endif
 
@@ -153,7 +174,7 @@ static unsigned short g_BadColor = 0xFFFF;
 static WORD g_BackgroundFlags = 0xFFFF;
 static void GetInitialColors( )
 {
-#if !defined( _X360 )
+#if defined( _WIN32 ) && !defined( _X360 )
 	// Get the old background attributes.
 	CONSOLE_SCREEN_BUFFER_INFO oldInfo;
 	GetConsoleScreenBufferInfo( GetStdHandle( STD_OUTPUT_HANDLE ), &oldInfo );
@@ -175,7 +196,7 @@ static void GetInitialColors( )
 WORD SetConsoleTextColor( int red, int green, int blue, int intensity )
 {
 	WORD ret = g_LastColor;
-#if !defined( _X360 )
+#if defined( _WIN32 ) && !defined( _X360 )
 	
 	g_LastColor = 0;
 	if( red )	g_LastColor |= FOREGROUND_RED;
@@ -194,7 +215,7 @@ WORD SetConsoleTextColor( int red, int green, int blue, int intensity )
 
 void RestoreConsoleTextColor( WORD color )
 {
-#if !defined( _X360 )
+#if defined( _WIN32 ) && !defined( _X360 )
 	SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), color | g_BackgroundFlags );
 	g_LastColor = color;
 #endif
@@ -413,7 +434,11 @@ void CmdLib_Cleanup()
 
 void CmdLib_Exit( int exitCode )
 {
+#ifdef _WIN32
 	TerminateProcess( GetCurrentProcess(), 1 );
+#else
+	_exit( exitCode ? exitCode : 1 );
+#endif
 }	
 
 

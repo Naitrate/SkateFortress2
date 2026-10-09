@@ -158,8 +158,7 @@ pub fn extract(data: &[u8]) -> Result<Extracted, String> {
     let brushes = &*brushes;
     let (sides, side_count) = bsp.lump(LUMP_BRUSHSIDES, 8)?;
     let sides = &*sides;
-    let mut triangles = Vec::new();
-    let mut used = 0;
+    let mut solids = Vec::new();
     for &b in &brush_ids {
         if b >= brush_count {
             return Err(format!("Leaf references brush {b} of {brush_count}"));
@@ -177,9 +176,19 @@ pub fn extract(data: &[u8]) -> Result<Extracted, String> {
                 (plane, bevel)
             })
             .collect();
-        let before = triangles.len();
-        brush_triangles(&brush_planes, &mut triangles);
-        used += usize::from(triangles.len() > before);
+        let solid = brush_solid(&brush_planes);
+        if !solid.faces.is_empty() {
+            solids.push(solid);
+        }
+    }
+    let used = solids.len();
+    let mut triangles = Vec::new();
+    for (i, solid) in solids.iter().enumerate() {
+        for (winding, normal) in &solid.faces {
+            if !buried(winding, *normal, i, &solids) {
+                fan(winding, *normal, &mut triangles);
+            }
+        }
     }
 
     let displacements = displacement_triangles(&bsp, &planes, &mut triangles)?;
@@ -235,7 +244,42 @@ fn world_brushes(bsp: &Bsp) -> Result<Vec<usize>, String> {
     Ok(result)
 }
 
-fn brush_triangles(sides: &[(Plane, bool)], out: &mut Vec<Triangle>) {
+/// One convex brush: its bounding planes, its faces, and its bounds.
+struct Solid {
+    planes: Vec<Plane>,
+    faces: Vec<(Vec<[f64; 3]>, [f64; 3])>,
+    min: [f64; 3],
+    max: [f64; 3],
+}
+
+impl Solid {
+    fn contains(&self, p: [f64; 3]) -> bool {
+        (0..3).all(|k| p[k] > self.min[k] - 1.0 && p[k] < self.max[k] + 1.0)
+            && self.planes.iter().all(|plane| dot(p, plane.normal) - plane.dist < -BURIED_EPSILON)
+    }
+}
+
+/// How far outside a face its samples are taken, and how deep inside another
+/// brush they must lie, in Hammer units.
+const BURIED_OFFSET: f64 = 0.5;
+const BURIED_EPSILON: f64 = 0.01;
+
+/// True if a face is wholly inside other brushes, like the walls between the
+/// pieces of a curved ramp. Skate would otherwise meet those walls' top edges
+/// at every seam of the riding surface (and snag the board). Sampled at the
+/// face's centre and corners (pulled a little toward it), each just outside.
+fn buried(winding: &[[f64; 3]], normal: [f64; 3], own: usize, solids: &[Solid]) -> bool {
+    let n = winding.len() as f64;
+    let centre = winding.iter().fold([0.0; 3], |acc, p| add(acc, scale(*p, 1.0 / n)));
+    let samples = std::iter::once(centre).chain(winding.iter().map(|p| add(centre, scale(sub(*p, centre), 0.9))));
+    samples.map(|p| add(p, scale(normal, BURIED_OFFSET))).all(|p| {
+        solids.iter().enumerate().any(|(j, other)| j != own && other.contains(p))
+    })
+}
+
+fn brush_solid(sides: &[(Plane, bool)]) -> Solid {
+    let mut faces = Vec::new();
+    let (mut min, mut max) = ([f64::MAX; 3], [f64::MIN; 3]);
     for (i, (plane, bevel)) in sides.iter().enumerate() {
         if *bevel {
             continue;
@@ -258,8 +302,17 @@ fn brush_triangles(sides: &[(Plane, bool)], out: &mut Vec<Triangle>) {
                 break;
             }
         }
-        fan(&winding, plane.normal, out);
+        if winding.len() >= 3 {
+            for p in &winding {
+                for k in 0..3 {
+                    min[k] = min[k].min(p[k]);
+                    max[k] = max[k].max(p[k]);
+                }
+            }
+            faces.push((winding, plane.normal));
+        }
     }
+    Solid { planes: sides.iter().map(|(plane, _)| *plane).collect(), faces, min, max }
 }
 
 fn base_winding(plane: &Plane) -> Vec<[f64; 3]> {

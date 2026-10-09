@@ -7,7 +7,7 @@
 
 #include "vbsp.h"
 #include "bsplib.h"
-#include "tier1/UtlBuffer.h"
+#include "tier1/utlbuffer.h"
 #include "tier1/utlvector.h"
 #include "bitmap/imageformat.h"
 #include <KeyValues.h>
@@ -199,10 +199,17 @@ static bool LoadSrcVTFFiles( IVTFTexture *pSrcVTFTextures[6], const char *pSkybo
 		char srcMaterialName[1024];
 		sprintf( srcMaterialName, "%s%s", pSkyboxMaterialBaseName, facingName[i] );
 
+#ifdef POSIX
+		// tf2-skate: the Linux tools read the .vmt themselves (utilmatlib.cpp).
+		const char *vtfName = GetMaterialVar( FindMaterial( srcMaterialName, NULL, false ), "$basetexture" );
+		if ( !vtfName )
+			vtfName = "";
+#else
 		IMaterial *pSkyboxMaterial = g_pMaterialSystem->FindMaterial( srcMaterialName, "skybox" );
 		//IMaterialVar *pSkyTextureVar = pSkyboxMaterial->FindVar( bHDR ? "$hdrbasetexture" : "$basetexture", NULL ); //, bHDR ? false : true );
 		IMaterialVar *pSkyTextureVar = pSkyboxMaterial->FindVar( "$basetexture", NULL ); // Since we're setting it to black anyway, just use $basetexture for HDR
 		const char *vtfName = pSkyTextureVar->GetStringValue();
+#endif
 		char srcVTFFileName[MAX_PATH];
 		Q_snprintf( srcVTFFileName, MAX_PATH, "materials/%s.vtf", vtfName );
 

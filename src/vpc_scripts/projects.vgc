@@ -21,7 +21,7 @@ $Project "client"
 
 $Project "fgdlib"
 {
-	"fgdlib\fgdlib.vpc" [$WINDOWS]
+	"fgdlib\fgdlib.vpc" [$WINDOWS || $LINUX64]
 }
 
 $Project "game_shader_generic_example"
@@ -107,7 +107,7 @@ $Project "tier1"
 
 $Project "vbsp"
 {
-	"utils\vbsp\vbsp.vpc" [$WINDOWS]
+	"utils\vbsp\vbsp.vpc" [$WINDOWS || $LINUX64]
 }
 
 $Project "vgui_controls"
