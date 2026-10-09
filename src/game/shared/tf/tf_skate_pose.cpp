@@ -247,3 +247,58 @@ bool SkateRetargetBones( CStudioHdr *hdr, matrix3x4_t *pBones, const Vector *J, 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Shove: both hands reach out to a point in front of the chest, the elbows
+// straightening along the way. The joints are positions, so moving the elbow
+// and wrist targets is enough; the retarget turns the arm bones to follow.
+//-----------------------------------------------------------------------------
+float SkateShoveAmount( float flSinceShove )
+{
+	if ( flSinceShove < 0.0f || flSinceShove > SKATE_SHOVE_TIME )
+		return 0.0f;
+	const float flOut = 0.12f, flHold = 0.2f;
+	if ( flSinceShove < flOut )
+	{
+		float x = flSinceShove / flOut;
+		return x * x * ( 3.0f - 2.0f * x );
+	}
+	if ( flSinceShove < flHold )
+		return 1.0f;
+	float x = ( flSinceShove - flHold ) / ( SKATE_SHOVE_TIME - flHold );
+	return 1.0f - x * x * ( 3.0f - 2.0f * x );
+}
+
+void SkateApplyShove( Vector *pJoints, const matrix3x4_t &rootToWorld, const Vector &vecDirection, float flAmount )
+{
+	if ( flAmount <= 0.0f )
+		return;
+	Vector vecDir;
+	VectorIRotate( vecDirection, rootToWorld, vecDir );
+	vecDir.z = clamp( vecDir.z, -0.3f, 0.3f );
+	if ( vecDir.NormalizeInPlace() < 0.1f )
+	{
+		vecDir.Init( 1, 0, 0 );
+	}
+	const Vector vecChest = ( pJoints[ SKATE_JOINT_LEFT_ARM ] + pJoints[ SKATE_JOINT_RIGHT_ARM ] ) * 0.5f;
+	static const int s_nArms[2][3] =
+	{
+		{ SKATE_JOINT_LEFT_ARM, SKATE_JOINT_LEFT_FOREARM, SKATE_JOINT_LEFT_HAND },
+		{ SKATE_JOINT_RIGHT_ARM, SKATE_JOINT_RIGHT_FOREARM, SKATE_JOINT_RIGHT_HAND },
+	};
+	for ( int side = 0; side < 2; ++side )
+	{
+		const Vector &vecShoulder = pJoints[ s_nArms[side][0] ];
+		Vector &vecElbow = pJoints[ s_nArms[side][1] ];
+		Vector &vecHand = pJoints[ s_nArms[side][2] ];
+		float flUpper = ( vecElbow - vecShoulder ).Length();
+		float flReach = ( flUpper + ( vecHand - vecElbow ).Length() ) * 0.95f;
+		// Palms a little narrower than the shoulders, at chest height.
+		Vector vecTarget = vecChest + vecDir * flReach + ( vecShoulder - vecChest ) * 0.35f;
+		Vector vecArm = vecTarget - vecShoulder;
+		if ( vecArm.NormalizeInPlace() < 0.01f )
+			continue;
+		vecElbow = Lerp( flAmount, vecElbow, vecShoulder + vecArm * flUpper * 0.97f );
+		vecHand = Lerp( flAmount, vecHand, vecShoulder + vecArm * flReach );
+	}
+}

@@ -681,7 +681,21 @@ void CTFGameMovement::SkateMove( void )
 	}
 	m_pTFPlayer->m_bSkateBailNext = false;
 	m_pTFPlayer->SkateMove( gpGlobals->frametime, input, mv );
+	// Shove (the Shove skate control): on the press.
+	if ( ( mv->m_nButtons & ~mv->m_nOldButtons ) & IN_GRENADE2 )
+	{
+		m_pTFPlayer->SkateShove();
+	}
 #else
+	// The shover's own arms move at once; the server decides who's pushed.
+	if ( m_pTFPlayer->IsLocalPlayer() && prediction->IsFirstTimePredicted() && ( ( mv->m_nButtons & ~mv->m_nOldButtons ) & IN_GRENADE2 )
+		&& gpGlobals->curtime >= m_pTFPlayer->m_flSkateNextShoveLocal )
+	{
+		static ConVarRef skate_shove_cooldown( "skate_shove_cooldown" );
+		m_pTFPlayer->m_flSkateNextShoveLocal = gpGlobals->curtime + ( skate_shove_cooldown.IsValid() ? skate_shove_cooldown.GetFloat() : 0.6f );
+		m_pTFPlayer->m_flSkateShoveLocalTime = gpGlobals->curtime;
+		AngleVectors( QAngle( 0, m_pTFPlayer->GetSkateBodyAngles()[ YAW ], 0 ), &m_pTFPlayer->m_vecSkateShoveLocalDir );
+	}
 	SkateStepResult_t result;
 	if ( m_pTFPlayer->IsLocalPlayer() && TFSkatePredictor().Move( m_pTFPlayer, pCmd, prediction->IsFirstTimePredicted(), result ) )
 	{

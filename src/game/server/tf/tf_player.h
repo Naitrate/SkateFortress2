@@ -1413,6 +1413,10 @@ public:
 	CNetworkVector( m_vecSkateCameraOffset );
 	CNetworkQAngle( m_angSkateCamera );
 	CNetworkArray( Vector, m_vecSkateJoints, SKATE_JOINT_COUNT );
+	// Shove: when and which way, for everyone's drawing (SkateApplyShove).
+	CNetworkVar( float, m_flSkateShoveTime );
+	CNetworkVector( m_vecSkateShoveDir );
+	float				m_flSkateNextShove;
 	// Hitboxes follow the skater's pose too (tf_skate_pose.cpp), so shots
 	// land where the skater is drawn.
 	virtual void		SetupBones( matrix3x4_t *pBoneToWorld, int boneMask ) OVERRIDE;
@@ -1448,6 +1452,7 @@ public:
 	bool				m_bSkateBailNext;	// a hard collision: wipe out on the next step
 	float				m_flSkateLastBump[ MAX_PLAYERS + 1 ];	// per victim, so one hit doesn't repeat
 	void				SkateCollidePlayers();
+	void				SkateShove();
 	// Trick scoring for the owner's HUD.
 	CNetworkVar( int, m_nSkateTrickSeq );
 	CNetworkString( m_szSkateTrick, 64 );

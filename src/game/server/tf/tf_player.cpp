@@ -867,6 +867,8 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	SendPropVector( SENDINFO( m_vecSkateOrigin ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
 	SendPropFloat( SENDINFO( m_flSkateTime ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
 	SendPropArray3( SENDINFO_ARRAY3( m_vecSkateJoints ), SendPropVector( SENDINFO_ARRAY( m_vecSkateJoints ), SKATE_JOINT_BITS, SPROP_CHANGES_OFTEN, -SKATE_JOINT_RANGE, SKATE_JOINT_RANGE ) ),
+	SendPropFloat( SENDINFO( m_flSkateShoveTime ), -1, SPROP_NOSCALE ),
+	SendPropVector( SENDINFO( m_vecSkateShoveDir ), -1, SPROP_NORMAL ),
 	SendPropInt( SENDINFO( m_iKartHealth ) ),
 	SendPropInt( SENDINFO( m_iKartState ) ),
 	SendPropEHandle( SENDINFO( m_hGrapplingHookTarget ) ),
@@ -3182,6 +3184,8 @@ void CTFPlayer::Precache()
 	PrecacheScriptSound( "Flesh.ImpactHard" );
 	PrecacheScriptSound( "Flesh.Break" );
 	PrecacheScriptSound( "Halloween.HammerImpactBloodyBoneCrunch" );
+	PrecacheScriptSound( "Weapon_Fist.HitFlesh" );
+	PrecacheScriptSound( "Weapon_Fist.Miss" );
 	
 	/*
 	Note: All TFPlayer specific must go inside PrecacheTFPlayer()

@@ -686,6 +686,13 @@ public:
 	int				m_nSkateBail;
 	int				m_nSkateBrokenBones;
 	int				m_nSkateBailScore;
+	// Shove: the server's (everyone) and the local player's own, started
+	// when the button was pressed so their arms don't wait a round trip.
+	float			m_flSkateShoveTime;
+	Vector			m_vecSkateShoveDir;
+	float			m_flSkateShoveLocalTime;
+	Vector			m_vecSkateShoveLocalDir;
+	float			m_flSkateNextShoveLocal;
 	// Trick scoring (owner only), read by CHudSkateTricks.
 	int				m_nSkateTrickSeq;
 	char			m_szSkateTrick[ 64 ];

@@ -29,4 +29,14 @@ struct SkateRigCache_t
 // is no pose yet or the model isn't a TF2 class rig.
 bool SkateRetargetBones( CStudioHdr *hdr, matrix3x4_t *pBones, const Vector *pJoints, const matrix3x4_t &rootToWorld, SkateRigCache_t &cache, int boneMask );
 
+// The mod's shove (tf_player_skate.cpp): both arms thrust out along
+// `vecDirection` (world space) by `flAmount` (0..1). Adjusts `pJoints`, the
+// SKATE_JOINT_COUNT joints in the root frame `rootToWorld`, before
+// SkateRetargetBones, so drawing and hitboxes agree.
+void SkateApplyShove( Vector *pJoints, const matrix3x4_t &rootToWorld, const Vector &vecDirection, float flAmount );
+// How far out the arms are `flSinceShove` seconds after a shove: out fast,
+// a moment held, back. 0 outside SKATE_SHOVE_TIME.
+float SkateShoveAmount( float flSinceShove );
+#define SKATE_SHOVE_TIME	0.45f
+
 #endif // TF_SKATE_POSE_H

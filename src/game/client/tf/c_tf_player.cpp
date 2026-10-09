@@ -3857,6 +3857,8 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropVector( RECVINFO( m_vecSkateOrigin ) ),
 	RecvPropFloat( RECVINFO( m_flSkateTime ) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_vecSkateJoints ), RecvPropVector( RECVINFO( m_vecSkateJoints[0] ) ) ),
+	RecvPropFloat( RECVINFO( m_flSkateShoveTime ) ),
+	RecvPropVector( RECVINFO( m_vecSkateShoveDir ) ),
 	RecvPropInt( RECVINFO( m_iKartHealth ) ),
 	RecvPropInt( RECVINFO( m_iKartState ) ),
 	RecvPropEHandle( RECVINFO( m_hGrapplingHookTarget ) ),
@@ -3947,6 +3949,10 @@ C_TFPlayer::C_TFPlayer() :
 	}
 	m_vecSkateSpawnVelocity.Init();
 	m_nSkateBail = m_nSkateBrokenBones = m_nSkateBailScore = 0;
+	m_flSkateShoveTime = m_flSkateShoveLocalTime = -100.0f;
+	m_flSkateNextShoveLocal = 0.0f;
+	m_vecSkateShoveDir.Init( 1, 0, 0 );
+	m_vecSkateShoveLocalDir.Init( 1, 0, 0 );
 
 	memset( m_pKartParticles, NULL, sizeof( m_pKartParticles ) );
 	memset( m_pKartSounds, NULL, sizeof( m_pKartSounds ) );
@@ -9052,7 +9058,20 @@ void C_TFPlayer::ApplySkatePose( CStudioHdr *hdr, int boneMask )
 	}
 	matrix3x4_t rootToWorld;
 	AngleMatrix( GetRenderAngles(), GetRenderOrigin(), rootToWorld );
-	if ( !SkateRetargetBones( hdr, bones.Base(), GetSkateJoints(), rootToWorld, m_SkateRig, boneMask ) )
+	Vector vecJoints[ SKATE_JOINT_COUNT ];
+	V_memcpy( vecJoints, GetSkateJoints(), sizeof( vecJoints ) );
+	// Shove arms: the local player's own as pressed, everyone else's as the
+	// server sent them, at the time they're drawn (interpolated, behind).
+	if ( IsLocalPlayer() && m_bSkatePredicted )
+	{
+		SkateApplyShove( vecJoints, rootToWorld, m_vecSkateShoveLocalDir, SkateShoveAmount( gpGlobals->curtime - m_flSkateShoveLocalTime ) );
+	}
+	else
+	{
+		float flDrawnTime = gpGlobals->curtime - GetInterpolationAmount( LATCH_SIMULATION_VAR );
+		SkateApplyShove( vecJoints, rootToWorld, m_vecSkateShoveDir, SkateShoveAmount( flDrawnTime - m_flSkateShoveTime ) );
+	}
+	if ( !SkateRetargetBones( hdr, bones.Base(), vecJoints, rootToWorld, m_SkateRig, boneMask ) )
 		return;
 	for ( int i = 0; i < nBones; ++i )
 	{

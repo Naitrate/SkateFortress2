@@ -22,6 +22,12 @@ ConVar skate_difficulty( "skate_difficulty", "normal", FCVAR_GAMEDLL | FCVAR_NOT
 ConVar skate_hall_of_meat( "skate_hall_of_meat", "1", FCVAR_GAMEDLL | FCVAR_NOTIFY | FCVAR_ARCHIVE, "Hall of Meat: bones a skater breaks in a bail cost health (skate_meat_*), with a crack for each." );
 ConVar skate_meat_bone_damage( "skate_meat_bone_damage", "6", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Hall of Meat: damage per broken bone." );
 ConVar skate_meat_neck_damage( "skate_meat_neck_damage", "40", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Hall of Meat: damage for breaking the neck or skull (instead of skate_meat_bone_damage)." );
+ConVar skate_shove( "skate_shove", "1", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Skaters can shove players in front of them (the Shove skate control)." );
+ConVar skate_shove_range( "skate_shove_range", "80", FCVAR_GAMEDLL | FCVAR_NOTIFY, "How far a shove reaches (units, centre to centre)." );
+ConVar skate_shove_force( "skate_shove_force", "450", FCVAR_GAMEDLL | FCVAR_NOTIFY, "A shove's push (units/s), plus half the shover's speed toward the target." );
+ConVar skate_shove_damage( "skate_shove_damage", "10", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Damage a shove does to enemies." );
+ConVar skate_shove_bail_speed( "skate_shove_bail_speed", "550", FCVAR_GAMEDLL | FCVAR_NOTIFY, "A shoved skater bails when the push is at least this strong (units/s)." );
+ConVar skate_shove_cooldown( "skate_shove_cooldown", "0.6", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Seconds between a skater's shoves." );
 ConVar skate_debug( "skate_debug", "0", FCVAR_GAMEDLL, "Print skater state changes." );
 ConVar skate_collide_players( "skate_collide_players", "1", FCVAR_GAMEDLL, "Skaters knock back and hurt enemies they run into, and kill players they land on." );
 ConVar skate_collide_teammates( "skate_collide_teammates", "0", FCVAR_GAMEDLL, "Skaters also bump teammates (knockback only, no damage)." );
@@ -97,6 +103,8 @@ bool CTFPlayer::StartSkating( char *pszError, int nErrorSize )
 	m_nSkateStartCmd = 0;
 	m_nSkateAckCmd = 0;
 	m_nSkateBreaksSeen = 0;
+	m_flSkateShoveTime = -100.0f;
+	m_flSkateNextShove = 0.0f;
 	m_nSkateBail = 0;
 	m_nSkateBrokenBones = 0;
 	m_nSkateBailScore = 0;
@@ -320,6 +328,7 @@ void CTFPlayer::SetupBones( matrix3x4_t *pBoneToWorld, int boneMask )
 	{
 		vecJoints[i] = m_vecSkateJoints[i];
 	}
+	SkateApplyShove( vecJoints, bodyToWorld, m_vecSkateShoveDir, SkateShoveAmount( gpGlobals->curtime - m_flSkateShoveTime ) );
 	SkateRetargetBones( hdr, pBoneToWorld, vecJoints, bodyToWorld, m_SkateRig, boneMask );
 }
 
@@ -397,4 +406,74 @@ void CTFPlayer::SkateCollidePlayers()
 		}
 		m_flSkateLastBump[i] = gpGlobals->curtime;
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Shove (the Shove skate control, IN_GRENADE2): push the nearest player in
+// front of the skater. Skate 3's own shove animation waits on its pedestrian
+// probe, which the engine hasn't recovered, so the mod pushes the target here
+// and draws the arms itself (SkateApplyShove). Pushes go through
+// ApplyGenericPushbackImpulse, so a shoved skater's simulation gets them.
+//-----------------------------------------------------------------------------
+void CTFPlayer::SkateShove()
+{
+	if ( !skate_shove.GetBool() || !IsAlive() || gpGlobals->curtime < m_flSkateNextShove )
+		return;
+	m_flSkateNextShove = gpGlobals->curtime + skate_shove_cooldown.GetFloat();
+
+	Vector vecForward;
+	AngleVectors( QAngle( 0, m_angSkateBody.Get()[ YAW ], 0 ), &vecForward );
+	const Vector vecCenter = WorldSpaceCenter();
+	const float flRange = skate_shove_range.GetFloat();
+	CTFPlayer *pTarget = NULL;
+	float flBest = FLT_MAX;
+	Vector vecToTarget = vecForward;
+	for ( int i = 1; i <= gpGlobals->maxClients; ++i )
+	{
+		CTFPlayer *pOther = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+		if ( !pOther || pOther == this || !pOther->IsAlive() || pOther->IsObserver() )
+			continue;
+		if ( pOther->GetTeamNumber() == GetTeamNumber() && !skate_collide_teammates.GetBool() )
+			continue;
+		Vector vecTo = pOther->WorldSpaceCenter() - vecCenter;
+		if ( fabsf( vecTo.z ) > 64.0f )
+			continue;
+		Vector vecFlat( vecTo.x, vecTo.y, 0.0f );
+		float flDist = vecFlat.NormalizeInPlace();
+		if ( flDist > flRange || flDist >= flBest || DotProduct( vecFlat, vecForward ) < 0.3f )
+			continue;
+		trace_t tr;
+		UTIL_TraceLine( vecCenter, pOther->WorldSpaceCenter(), MASK_SOLID_BRUSHONLY, this, COLLISION_GROUP_NONE, &tr );
+		if ( tr.fraction < 1.0f )
+			continue;
+		pTarget = pOther;
+		flBest = flDist;
+		vecToTarget = vecFlat;
+	}
+
+	m_flSkateShoveTime = gpGlobals->curtime;
+	m_vecSkateShoveDir = vecToTarget;
+	if ( !pTarget )
+	{
+		EmitSound( "Weapon_Fist.Miss" );
+		return;
+	}
+
+	// Harder the faster the shover closes on them.
+	float flClosing = MAX( 0.0f, DotProduct( m_vecSkateVelocity - pTarget->GetAbsVelocity(), vecToTarget ) );
+	float flPush = skate_shove_force.GetFloat() + flClosing * 0.5f;
+	Vector vecPush = vecToTarget * flPush + Vector( 0, 0, 200.0f );
+	pTarget->ApplyGenericPushbackImpulse( vecPush, this );
+	if ( pTarget->m_Shared.InCond( TF_COND_SKATING ) && flPush >= skate_shove_bail_speed.GetFloat() )
+	{
+		pTarget->m_bSkateBailNext = true;
+	}
+	if ( pTarget->GetTeamNumber() != GetTeamNumber() && skate_shove_damage.GetFloat() > 0.0f )
+	{
+		CTakeDamageInfo info( this, this, skate_shove_damage.GetFloat(), DMG_CLUB );
+		info.SetDamageForce( vecPush * 50.0f );
+		info.SetDamagePosition( pTarget->WorldSpaceCenter() );
+		pTarget->TakeDamage( info );
+	}
+	pTarget->EmitSound( "Weapon_Fist.HitFlesh" );
 }

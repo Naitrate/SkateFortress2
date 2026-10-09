@@ -60,6 +60,7 @@ SKATE_KEY( grab_right, "E", "right grab (right trigger)" );
 SKATE_KEY( lb, "CTRL", "left bumper" );
 SKATE_KEY( rb, "MOUSE3", "right bumper" );
 SKATE_KEY( l3, "ALT", "left stick click" );
+SKATE_KEY( shove, "R", "shove the player in front of you" );
 SKATE_KEY( bail, "F", "bail / dive: Skate's manual bail (both triggers and stick clicks)" );
 SKATE_PAD( push, "A_BUTTON", "push (A)" );
 SKATE_PAD( x, "X_BUTTON", "X" );
@@ -71,6 +72,7 @@ SKATE_PAD( lb, "L_SHOULDER", "left bumper" );
 SKATE_PAD( rb, "R_SHOULDER", "right bumper" );
 SKATE_PAD( l3, "STICK2", "left stick click" );
 SKATE_PAD( bail, "STICK1", "bail / dive" );
+SKATE_PAD( shove, "DPAD_LEFT", "shove" );
 
 // The flick stick (mouse as Skate's right stick). Sent to the server as
 // userinfo; the simulation applies them to this player only.
@@ -127,6 +129,8 @@ static SkateAction_t s_Actions[] =
 	{ "Left bumper (LB)",			&cl_skate_key_lb,			KEY_LCONTROL, &cl_skate_pad_lb,				KEY_XBUTTON_LEFT_SHOULDER,		IN_SPEED,	0, 0 },
 	{ "Right bumper (RB)",			&cl_skate_key_rb,			MOUSE_MIDDLE, &cl_skate_pad_rb,				KEY_XBUTTON_RIGHT_SHOULDER,		IN_ATTACK3,	0, 0 },
 	{ "Left stick click (L3)",		&cl_skate_key_l3,			KEY_LALT,	&cl_skate_pad_l3,				KEY_XBUTTON_STICK2,				IN_WALK,	0, 0 },
+	// The mod's own move (tf_player_skate.cpp); the engine ignores the bit.
+	{ "Shove",						&cl_skate_key_shove,		KEY_R,		&cl_skate_pad_shove,			KEY_XBUTTON_LEFT,				IN_GRENADE2, 0, 0 },
 	// Skate 3's manual bail takes both triggers and both stick clicks at once;
 	// the engine's virtual pad presses them all for this one bit.
 	{ "Bail / dive",				&cl_skate_key_bail,			KEY_F,		&cl_skate_pad_bail,				KEY_XBUTTON_STICK1,				IN_GRENADE1, 0, 0 },
