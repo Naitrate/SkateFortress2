@@ -120,12 +120,12 @@ a controller, press **BACK** (View).
 |---|---|
 | W A S D | left stick: lean and steer, or walk while off the board |
 | mouse | right stick: pull back then flick forward to ollie; other flicks do flip tricks |
-| space | A: push |
-| R | B: brake / powerslide |
-| ctrl | X |
-| E | Y: step off or back onto the board |
-| mouse1 / mouse2 | left / right trigger: grabs |
-| shift / mouse3 | LB / RB |
+| shift | A: push |
+| mouse2 | B: brake / powerslide |
+| space | X |
+| mouse1 | Y: step off or back onto the board |
+| Q / E | left / right trigger: grabs |
+| ctrl / mouse3 | LB / RB |
 | alt | left stick click |
 
 The skate controls are separate from TF2's binds. Remap them, keyboard and controller,

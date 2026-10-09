@@ -49,13 +49,18 @@
 #define JOY_RELATIVE_AXIS	0x00000010		
 
 // Axis mapping
+// tf2-skate: the defaults below are TF2's 360controller.cfg layout (left
+// stick moves, right stick looks). TF2 only runs that file when it recognises
+// an Xbox controller, which Steam Input's virtual pad on Linux isn't, and its
+// 360controller-linux.cfg sets no axes; the SDK's own defaults then had the
+// sticks swapped (look on the left, strafe on the right).
 static ConVar joy_name( "joy_name", "joystick", FCVAR_ARCHIVE );
 static ConVar joy_advanced( "joy_advanced", "1", FCVAR_ARCHIVE );
-static ConVar joy_advaxisx( "joy_advaxisx", "4", FCVAR_ARCHIVE );
-static ConVar joy_advaxisy( "joy_advaxisy", "2", FCVAR_ARCHIVE );
+static ConVar joy_advaxisx( "joy_advaxisx", "3", FCVAR_ARCHIVE );
+static ConVar joy_advaxisy( "joy_advaxisy", "1", FCVAR_ARCHIVE );
 static ConVar joy_advaxisz( "joy_advaxisz", "0", FCVAR_ARCHIVE );
-static ConVar joy_advaxisr( "joy_advaxisr", "1", FCVAR_ARCHIVE );
-static ConVar joy_advaxisu( "joy_advaxisu", "3", FCVAR_ARCHIVE );
+static ConVar joy_advaxisr( "joy_advaxisr", "2", FCVAR_ARCHIVE );
+static ConVar joy_advaxisu( "joy_advaxisu", "4", FCVAR_ARCHIVE );
 static ConVar joy_advaxisv( "joy_advaxisv", "0", FCVAR_ARCHIVE );
 
 // Basic "dead zone" and sensitivity
@@ -66,16 +71,16 @@ static ConVar joy_yawthreshold( "joy_yawthreshold", "0.15", FCVAR_ARCHIVE );
 static ConVar joy_forwardsensitivity( "joy_forwardsensitivity", "-1", FCVAR_ARCHIVE );
 static ConVar joy_sidesensitivity( "joy_sidesensitivity", "1", FCVAR_ARCHIVE );
 static ConVar joy_pitchsensitivity( "joy_pitchsensitivity", "1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
-static ConVar joy_yawsensitivity( "joy_yawsensitivity", "-1", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
+static ConVar joy_yawsensitivity( "joy_yawsensitivity", "-1.25", FCVAR_ARCHIVE | FCVAR_ARCHIVE_XBOX );
 
 // Advanced sensitivity and response
-static ConVar joy_response_move( "joy_response_move", "1", FCVAR_ARCHIVE, "'Movement' stick response mode: 0=Linear, 1=quadratic, 2=cubic, 3=quadratic extreme, 4=power function(i.e., pow(x,1/sensitivity)), 5=two-stage" );
+static ConVar joy_response_move( "joy_response_move", "0", FCVAR_ARCHIVE, "'Movement' stick response mode: 0=Linear, 1=quadratic, 2=cubic, 3=quadratic extreme, 4=power function(i.e., pow(x,1/sensitivity)), 5=two-stage" );
 ConVar joy_response_move_vehicle("joy_response_move_vehicle", "6");
-static ConVar joy_response_look( "joy_response_look", "0", FCVAR_ARCHIVE, "'Look' stick response mode: 0=Default, 1=Acceleration Promotion" );
-static ConVar joy_lowend( "joy_lowend", "1", FCVAR_ARCHIVE );
-static ConVar joy_lowmap( "joy_lowmap", "1", FCVAR_ARCHIVE );
-static ConVar joy_accelscale( "joy_accelscale", "0.6", FCVAR_ARCHIVE);
-static ConVar joy_accelmax( "joy_accelmax", "1.0", FCVAR_ARCHIVE);
+static ConVar joy_response_look( "joy_response_look", "1", FCVAR_ARCHIVE, "'Look' stick response mode: 0=Default, 1=Acceleration Promotion" );
+static ConVar joy_lowend( "joy_lowend", "0.65", FCVAR_ARCHIVE );
+static ConVar joy_lowmap( "joy_lowmap", "0.15", FCVAR_ARCHIVE );
+static ConVar joy_accelscale( "joy_accelscale", "2.0", FCVAR_ARCHIVE);
+static ConVar joy_accelmax( "joy_accelmax", "2.0", FCVAR_ARCHIVE);
 static ConVar joy_autoaimdampenrange( "joy_autoaimdampenrange", "0", FCVAR_ARCHIVE, "The stick range where autoaim dampening is applied. 0 = off" );
 static ConVar joy_autoaimdampen( "joy_autoaimdampen", "0", FCVAR_ARCHIVE, "How much to scale user stick input when the gun is pointing at a valid target." );
 

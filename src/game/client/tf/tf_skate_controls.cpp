@@ -51,13 +51,13 @@ SKATE_KEY( lean_forward, "W", "lean forward (left stick up)" );
 SKATE_KEY( lean_back, "S", "lean back (left stick down)" );
 SKATE_KEY( steer_left, "A", "steer left (left stick left)" );
 SKATE_KEY( steer_right, "D", "steer right (left stick right)" );
-SKATE_KEY( push, "SPACE", "push (A)" );
-SKATE_KEY( x, "CTRL", "X" );
-SKATE_KEY( brake, "R", "brake / powerslide (B)" );
-SKATE_KEY( board, "E", "step off / on the board (Y)" );
-SKATE_KEY( grab_left, "MOUSE1", "left grab (left trigger)" );
-SKATE_KEY( grab_right, "MOUSE2", "right grab (right trigger)" );
-SKATE_KEY( lb, "SHIFT", "left bumper" );
+SKATE_KEY( push, "SHIFT", "push (A)" );
+SKATE_KEY( x, "SPACE", "X" );
+SKATE_KEY( brake, "MOUSE2", "brake / powerslide (B)" );
+SKATE_KEY( board, "MOUSE1", "step off / on the board (Y)" );
+SKATE_KEY( grab_left, "Q", "left grab (left trigger)" );
+SKATE_KEY( grab_right, "E", "right grab (right trigger)" );
+SKATE_KEY( lb, "CTRL", "left bumper" );
 SKATE_KEY( rb, "MOUSE3", "right bumper" );
 SKATE_KEY( l3, "ALT", "left stick click" );
 SKATE_PAD( push, "A_BUTTON", "push (A)" );
@@ -75,19 +75,54 @@ SKATE_PAD( l3, "STICK2", "left stick click" );
 static ConVar cl_skate_mouse_gain( "cl_skate_mouse_gain", "0.02", FCVAR_ARCHIVE | FCVAR_USERINFO, "Skate flick stick: stick deflection per mouse count (higher = shorter flicks).", true, 0.002f, true, 0.2f );
 static ConVar cl_skate_mouse_decay( "cl_skate_mouse_decay", "0.7", FCVAR_ARCHIVE | FCVAR_USERINFO, "Skate flick stick: how much deflection carries into the next tick (higher = smoother, slower to recentre).", true, 0.0f, true, 0.95f );
 
+//-----------------------------------------------------------------------------
+// TF2's controller layout for walking around: left stick moves, right stick
+// looks (360controller.cfg; in_joystick.cpp now defaults to it too). TF2 only
+// applies that file to controllers it recognises as Xbox ones, which Steam
+// Input's virtual pad on Linux isn't, so configs saved before then hold the
+// SDK's swapped sticks. skate.cfg runs skate_controller_layout_once at every
+// start; it applies the layout once per install and then leaves the player's
+// own settings alone.
+//-----------------------------------------------------------------------------
+static void ApplyControllerLayout()
+{
+	engine->ClientCmd_Unrestricted(
+		"joy_advanced 1; joy_advaxisx 3; joy_advaxisy 1; joy_advaxisz 0; joy_advaxisr 2; joy_advaxisu 4; joy_advaxisv 0;"
+		"joy_forwardsensitivity -1; joy_sidesensitivity 1; joy_pitchsensitivity 1; joy_yawsensitivity -1.25;"
+		"joy_response_move 0; joy_response_look 1; joy_lowend 0.65; joy_lowmap 0.15; joy_accelscale 2; joy_accelmax 2;"
+		"joyadvancedupdate\n" );
+}
+
+static ConVar cl_skate_controller_layout( "cl_skate_controller_layout", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN, "Version of the controller stick layout skate_controller_layout_once last applied." );
+
+CON_COMMAND( skate_controller_layout, "Set the controller back to TF2's layout: left stick moves, right stick looks." )
+{
+	ApplyControllerLayout();
+	Msg( "Controller: left stick moves, right stick looks.\n" );
+}
+
+CON_COMMAND_F( skate_controller_layout_once, "Apply TF2's controller layout if this install hasn't had it yet (skate.cfg).", FCVAR_HIDDEN )
+{
+	const int nLayout = 1;
+	if ( cl_skate_controller_layout.GetInt() >= nLayout )
+		return;
+	ApplyControllerLayout();
+	cl_skate_controller_layout.SetValue( nLayout );
+}
+
 static SkateAction_t s_Actions[] =
 {
 	{ "Lean forward",				&cl_skate_key_lean_forward,	KEY_W,		NULL,							BUTTON_CODE_INVALID,			0,			1,  1.0f },
 	{ "Lean back",					&cl_skate_key_lean_back,	KEY_S,		NULL,							BUTTON_CODE_INVALID,			0,			1, -1.0f },
 	{ "Steer left",					&cl_skate_key_steer_left,	KEY_A,		NULL,							BUTTON_CODE_INVALID,			0,			2, -1.0f },
 	{ "Steer right",				&cl_skate_key_steer_right,	KEY_D,		NULL,							BUTTON_CODE_INVALID,			0,			2,  1.0f },
-	{ "Push (A)",					&cl_skate_key_push,			KEY_SPACE,	&cl_skate_pad_push,				KEY_XBUTTON_A,					IN_JUMP,	0, 0 },
-	{ "Brake / powerslide (B)",		&cl_skate_key_brake,		KEY_R,		&cl_skate_pad_brake,			KEY_XBUTTON_B,					IN_RELOAD,	0, 0 },
-	{ "X",							&cl_skate_key_x,			KEY_LCONTROL, &cl_skate_pad_x,				KEY_XBUTTON_X,					IN_DUCK,	0, 0 },
-	{ "Step off / on board (Y)",	&cl_skate_key_board,		KEY_E,		&cl_skate_pad_board,			KEY_XBUTTON_Y,					IN_USE,		0, 0 },
-	{ "Left grab (LT)",				&cl_skate_key_grab_left,	MOUSE_LEFT,	&cl_skate_pad_grab_left,		KEY_XBUTTON_LTRIGGER,			IN_ATTACK,	0, 0 },
-	{ "Right grab (RT)",			&cl_skate_key_grab_right,	MOUSE_RIGHT, &cl_skate_pad_grab_right,		KEY_XBUTTON_RTRIGGER,			IN_ATTACK2,	0, 0 },
-	{ "Left bumper (LB)",			&cl_skate_key_lb,			KEY_LSHIFT,	&cl_skate_pad_lb,				KEY_XBUTTON_LEFT_SHOULDER,		IN_SPEED,	0, 0 },
+	{ "Push (A)",					&cl_skate_key_push,			KEY_LSHIFT,	&cl_skate_pad_push,				KEY_XBUTTON_A,					IN_JUMP,	0, 0 },
+	{ "Brake / powerslide (B)",		&cl_skate_key_brake,		MOUSE_RIGHT, &cl_skate_pad_brake,			KEY_XBUTTON_B,					IN_RELOAD,	0, 0 },
+	{ "X",							&cl_skate_key_x,			KEY_SPACE,	&cl_skate_pad_x,				KEY_XBUTTON_X,					IN_DUCK,	0, 0 },
+	{ "Step off / on board (Y)",	&cl_skate_key_board,		MOUSE_LEFT,	&cl_skate_pad_board,			KEY_XBUTTON_Y,					IN_USE,		0, 0 },
+	{ "Left grab (LT)",				&cl_skate_key_grab_left,	KEY_Q,		&cl_skate_pad_grab_left,		KEY_XBUTTON_LTRIGGER,			IN_ATTACK,	0, 0 },
+	{ "Right grab (RT)",			&cl_skate_key_grab_right,	KEY_E,		&cl_skate_pad_grab_right,		KEY_XBUTTON_RTRIGGER,			IN_ATTACK2,	0, 0 },
+	{ "Left bumper (LB)",			&cl_skate_key_lb,			KEY_LCONTROL, &cl_skate_pad_lb,				KEY_XBUTTON_LEFT_SHOULDER,		IN_SPEED,	0, 0 },
 	{ "Right bumper (RB)",			&cl_skate_key_rb,			MOUSE_MIDDLE, &cl_skate_pad_rb,				KEY_XBUTTON_RIGHT_SHOULDER,		IN_ATTACK3,	0, 0 },
 	{ "Left stick click (L3)",		&cl_skate_key_l3,			KEY_LALT,	&cl_skate_pad_l3,				KEY_XBUTTON_STICK2,				IN_WALK,	0, 0 },
 };

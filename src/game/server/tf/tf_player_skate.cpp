@@ -113,9 +113,9 @@ bool CTFPlayer::StartSkating( char *pszError, int nErrorSize )
 		TFBotSkateReset( this );
 	}
 	ClientPrint( this, HUD_PRINTCENTER,
-		"SKATING  -  W/S lean, A/D steer, SPACE push\n"
+		"SKATING  -  W/S lean, A/D steer, SHIFT push, MOUSE2 brake\n"
 		"Mouse back then forward: ollie.  Flick other ways: flip tricks\n"
-		"Mouse1/2 grab, E step off board, K stop skating" );
+		"Q/E grab, MOUSE1 step off board, K stop skating" );
 	return true;
 }
 
