@@ -19,6 +19,9 @@
 #include "tier0/memdbgon.h"
 
 ConVar skate_difficulty( "skate_difficulty", "normal", FCVAR_GAMEDLL | FCVAR_NOTIFY | FCVAR_ARCHIVE, "Skate 3 physics mode for skaters spawned on this server: easy, normal, hardcore or motorized." );
+ConVar skate_hall_of_meat( "skate_hall_of_meat", "1", FCVAR_GAMEDLL | FCVAR_NOTIFY | FCVAR_ARCHIVE, "Hall of Meat: bones a skater breaks in a bail cost health (skate_meat_*), with a crack for each." );
+ConVar skate_meat_bone_damage( "skate_meat_bone_damage", "6", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Hall of Meat: damage per broken bone." );
+ConVar skate_meat_neck_damage( "skate_meat_neck_damage", "40", FCVAR_GAMEDLL | FCVAR_NOTIFY, "Hall of Meat: damage for breaking the neck or skull (instead of skate_meat_bone_damage)." );
 ConVar skate_debug( "skate_debug", "0", FCVAR_GAMEDLL, "Print skater state changes." );
 ConVar skate_collide_players( "skate_collide_players", "1", FCVAR_GAMEDLL, "Skaters knock back and hurt enemies they run into, and kill players they land on." );
 ConVar skate_collide_teammates( "skate_collide_teammates", "0", FCVAR_GAMEDLL, "Skaters also bump teammates (knockback only, no damage)." );
@@ -93,6 +96,10 @@ bool CTFPlayer::StartSkating( char *pszError, int nErrorSize )
 	m_nSkateWorldCRC = (int)TFSkateSidecar().GetWorldCRC();
 	m_nSkateStartCmd = 0;
 	m_nSkateAckCmd = 0;
+	m_nSkateBreaksSeen = 0;
+	m_nSkateBail = 0;
+	m_nSkateBrokenBones = 0;
+	m_nSkateBailScore = 0;
 
 	m_nSkateState = 0;
 	m_angSkateBody = QAngle( 0, EyeAngles()[ YAW ], 0 );
@@ -224,6 +231,24 @@ void CTFPlayer::SkateMove( float flDeltaTime, const SkateInput_t &playerInput, C
 			return;
 	}
 	m_flSkateFallSpeed = MAX( 0.0f, -result.vecVelocity.z );
+
+	// Hall of Meat: each bone the bail broke since the last step hurts, and
+	// cracks. The engine breaks a bone once per bail (Injury in sidecar/mod.rs).
+	m_nSkateBail = result.nBail;
+	m_nSkateBrokenBones = result.nBrokenBones;
+	m_nSkateBailScore = (int)result.flBailScore;
+	int nNewBreaks = result.nBreaks - m_nSkateBreaksSeen;
+	m_nSkateBreaksSeen = result.nBreaks;
+	if ( nNewBreaks > 0 && skate_hall_of_meat.GetBool() )
+	{
+		bool bNeck = result.nLastBreak == SKATE_BONE_NECK || result.nLastBreak == SKATE_BONE_SKULL;
+		EmitSound( bNeck ? "Halloween.HammerImpactBloodyBoneCrunch" : "Flesh.Break" );
+		float flDamage = ( nNewBreaks - ( bNeck ? 1 : 0 ) ) * skate_meat_bone_damage.GetFloat() + ( bNeck ? skate_meat_neck_damage.GetFloat() : 0.0f );
+		CBaseEntity *pWorld = GetWorldEntity();
+		TakeDamage( CTakeDamageInfo( pWorld, pWorld, flDamage, DMG_FALL ) );
+		if ( !IsAlive() || !m_Shared.InCond( TF_COND_SKATING ) )
+			return;
+	}
 
 	pMove->SetAbsOrigin( result.vecOrigin );
 	m_vecSkateOrigin = result.vecOrigin;

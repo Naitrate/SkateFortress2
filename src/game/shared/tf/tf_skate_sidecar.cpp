@@ -41,7 +41,7 @@ enum
 	SKATE_MSG_COPY = 6,
 	SKATE_MSG_POLL = 7,
 };
-static const unsigned int SKATE_PROTOCOL_VERSION = 10;
+static const unsigned int SKATE_PROTOCOL_VERSION = 11;
 // STEP reply state while the sidecar is still building the skater.
 static const unsigned int SKATE_STATE_LOADING_WIRE = 0xFFFFFFFFu;
 
@@ -851,6 +851,11 @@ bool CTFSkateSidecar::Step( int id, float flDeltaTime, const SkateInput_t &input
 	result.flMultiplier = reply.GetFloat();
 	result.flTotalScore = reply.GetFloat();
 	result.nScoreFlags = reply.GetInt();
+	result.nBail = reply.GetInt();
+	result.nBrokenBones = reply.GetInt();
+	result.flBailScore = reply.GetFloat();
+	result.nBreaks = reply.GetInt();
+	result.nLastBreak = reply.GetInt();
 	if ( !reply.IsValid() )
 	{
 		V_snprintf( pszError, nErrorSize, "Skate sidecar step reply was too short" );

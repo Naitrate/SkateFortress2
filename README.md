@@ -127,6 +127,7 @@ a controller, press **BACK** (View).
 | Q / E | left / right trigger: grabs |
 | ctrl / mouse3 | LB / RB |
 | alt | left stick click |
+| F | bail / dive: Skate 3's manual bail, at your current speed (right stick click on a controller) |
 
 The skate controls are separate from TF2's binds. Remap them, keyboard and controller,
 in Options > Advanced > Skate 3 > **Skate 3 controls...** (or the `skate_controls` command).
@@ -145,6 +146,7 @@ Settings (most are in Options > Advanced > Skate 3):
 | `skate_collide_players`, `skate_collide_teammates`, `skate_ram_speed`, `skate_ram_bail_speed`, `skate_stomp_speed` | Server: skaters knock back and hurt enemies they hit, and kill players they land on. A hard hit makes the skater bail. |
 | `skate_board_drop`, `skate_board_lifetime`, `skate_board_hurt_speed`, `skate_board_kill_speed` | Server: a dead skater's board drops as a physics object that can hurt or kill enemies. |
 | `skate_hitboxes` | Server: hitboxes follow the skater's pose (default 1). |
+| `skate_hall_of_meat`, `skate_meat_bone_damage`, `skate_meat_neck_damage` | Server: Hall of Meat. Bones a bail breaks cost health (6 each, 40 for the neck or skull) with a crack; the HUD shows the bail's score and broken bones. The engine judges bails by the ragdoll's impacts (`Injury` in `sidecar/mod.rs`); `SKATE_INJURY_DEBUG=1` prints them. |
 | `cl_skate_predict` | Predict your own skater: 0 off, 1 on other people's servers (default), 2 always (to test on your own server). `cl_skate_predict_debug 1` prints its events, `2` every sync check. |
 | `skate_world_scale`, `skate_debug` | Server. |
 

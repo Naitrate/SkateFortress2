@@ -1437,6 +1437,11 @@ public:
 	CNetworkArray( int, m_nSkateFlagBits, SKATE_FLAG_HISTORY );
 	CNetworkArray( Vector, m_vecSkateFlagImpulse, SKATE_FLAG_HISTORY );	// knockback the server added at those usercmds
 	CNetworkVector( m_vecSkateSpawnVelocity );
+	// Hall of Meat, for the owner's HUD: this bail's broken bones and score.
+	CNetworkVar( int, m_nSkateBail );
+	CNetworkVar( int, m_nSkateBrokenBones );
+	CNetworkVar( int, m_nSkateBailScore );
+	int					m_nSkateBreaksSeen;	// engine break count already turned into damage
 	Vector				m_vecSkateImpulse;	// knockback since the last step, for the skater
 	float				m_flSkateFallSpeed;	// downward speed on the previous step
 	Vector				m_vecSkateVelocity;	// the skater's latest velocity (dropped board, collisions)

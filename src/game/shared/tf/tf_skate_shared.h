@@ -50,4 +50,17 @@ enum ESkateJoint
 // about: the last few, by usercmd number.
 #define SKATE_FLAG_HISTORY	8
 
+// Hall of Meat: the rider's physical bones, in the engine's PHYS_TPOSE order
+// (bit n of the broken-bones mask is bone n; 0 is the board root).
+#define SKATE_BONE_COUNT	24
+#define SKATE_BONE_SKULL	1
+#define SKATE_BONE_NECK		2
+static const char *const g_pszSkateBoneNames[ SKATE_BONE_COUNT ] =
+{
+	"board", "skull", "neck", "left wrist", "left forearm", "left humerus", "left collarbone",
+	"right wrist", "right forearm", "right humerus", "right collarbone", "upper back", "ribs",
+	"spine", "lower back", "left toes", "left ankle", "left shin", "left femur", "right toes",
+	"right ankle", "right shin", "right femur", "pelvis",
+};
+
 #endif // TF_SKATE_SHARED_H

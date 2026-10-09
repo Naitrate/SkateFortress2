@@ -34,7 +34,7 @@ use std::{
     time::Instant,
 };
 
-pub(crate) const PROTOCOL_VERSION: u32 = 10;
+pub(crate) const PROTOCOL_VERSION: u32 = 11;
 /// STEP flag: start a wipeout now (e.g. the TF2 player hit deep water).
 const STEP_FORCE_WIPEOUT: u32 = 1;
 /// PhysicalStateId of the first tick, which places a new skater.
@@ -125,6 +125,88 @@ struct Skater {
     /// skater (state 700) and settles its bodies at rest, so this is added
     /// once that tick has run.
     spawn_velocity: Option<[f32; 3]>,
+    /// Hall of Meat: what this skater's bails have broken.
+    injury: Injury,
+}
+
+/// Hall of Meat injuries, for the TF2 mod. Skate 3's own bone-break system
+/// isn't recovered (the camera's broken_bone_duration is always 0), so this
+/// judges bails by what the ragdoll's bones go through: a sudden change in a
+/// bone's velocity within one tick is an impact. Impacts score; very hard
+/// ones break that bone, once per bail. Part 0 is the board root, so bones
+/// are parts 1..24 of the physical skeleton (PHYS_TPOSE order).
+#[derive(Clone, Default)]
+struct Injury {
+    in_bail: bool,
+    /// Increments when a bail starts.
+    bail: u32,
+    /// Bones broken this bail, bit per skeleton part.
+    broken: u32,
+    /// This bail's score.
+    score: f32,
+    /// Increments per broken bone; `last_bone` is the latest one.
+    breaks: u32,
+    last_bone: u32,
+    previous: Vec<[f32; 3]>,
+}
+
+/// A bone's velocity changing this much (m/s) in one tick scores (a fall
+/// from standing reaches about 5; the ragdoll's own motion stays below 4)...
+const IMPACT_SPEED: f32 = 4.0;
+/// ...this much breaks it.
+const BREAK_SPEED: f32 = 8.0;
+const IMPACT_POINTS: f32 = 40.0;
+const BREAK_POINTS: f32 = 1000.0;
+const SKELETON_BONES: usize = 24;
+
+impl Injury {
+    fn update(&mut self, wiping_out: bool, bodies: &[skate_core::physics::assembly::BodySnapshot]) {
+        let velocities: Vec<[f32; 3]> = bodies
+            .iter()
+            .take(SKELETON_BONES)
+            .map(|b| [b.rates.linear_velocity.x, b.rates.linear_velocity.y, b.rates.linear_velocity.z])
+            .collect();
+        if !wiping_out {
+            self.in_bail = false;
+        } else if !self.in_bail {
+            self.in_bail = true;
+            self.bail = self.bail.wrapping_add(1);
+            self.broken = 0;
+            self.score = 0.0;
+        } else {
+            if std::env::var_os("SKATE_INJURY_DEBUG").is_some() {
+                let peak = (1..velocities.len().min(self.previous.len()))
+                    .map(|b| (0..3).map(|i| (velocities[b][i] - self.previous[b][i]).powi(2)).sum::<f32>().sqrt())
+                    .fold(0.0f32, f32::max);
+                if peak > 0.5 {
+                    eprintln!("SKATE_INJURY bail {} peak velocity change {peak:.2} m/s", self.bail);
+                }
+            }
+            for bone in 1..velocities.len().min(self.previous.len()) {
+                let (v, p) = (velocities[bone], self.previous[bone]);
+                let change = ((v[0] - p[0]).powi(2) + (v[1] - p[1]).powi(2) + (v[2] - p[2]).powi(2)).sqrt();
+                if change > IMPACT_SPEED {
+                    self.score += (change - IMPACT_SPEED) * IMPACT_POINTS;
+                }
+                if change > BREAK_SPEED && self.broken & (1 << bone) == 0 {
+                    self.broken |= 1 << bone;
+                    self.breaks = self.breaks.wrapping_add(1);
+                    self.last_bone = bone as u32;
+                    self.score += BREAK_POINTS * change / BREAK_SPEED;
+                }
+            }
+        }
+        self.previous = velocities;
+    }
+
+    /// Reply fields: bail, broken bones, score, breaks, latest bone.
+    fn write(&self, reply: &mut Writer) {
+        reply.u32(self.bail);
+        reply.u32(self.broken);
+        reply.f32(self.score);
+        reply.u32(self.breaks);
+        reply.u32(self.last_bone);
+    }
 }
 
 struct StepJob {
@@ -577,7 +659,9 @@ fn step_skater(
             skater.controller.tick_input(),
             &mut skater.camera,
         )?;
-        if skater.spawn_velocity.is_some() && skater.runtime.player_state.current() as u32 != SPAWN_STATE {
+        let state = skater.runtime.player_state.current() as u32;
+        skater.injury.update((300..400).contains(&state), skater.runtime.skeleton.bodies());
+        if skater.spawn_velocity.is_some() && state != SPAWN_STATE {
             let v = skater.spawn_velocity.take().unwrap_or_default();
             add_velocity(skater, v);
         }
@@ -595,6 +679,7 @@ fn step_skater(
     };
     pose.write(reply, ticks);
     write_score(skater, trick_names, reply);
+    skater.injury.write(reply);
     Ok(())
 }
 
@@ -643,6 +728,7 @@ fn build_skater(
         joints,
         previous: None,
         spawn_velocity: None,
+        injury: Injury::default(),
     })
 }
 

@@ -682,6 +682,10 @@ public:
 	int				m_nSkateFlagBits[ SKATE_FLAG_HISTORY ];
 	Vector			m_vecSkateFlagImpulse[ SKATE_FLAG_HISTORY ];
 	Vector			m_vecSkateSpawnVelocity;
+	// Hall of Meat (owner only): this bail's broken bones and score.
+	int				m_nSkateBail;
+	int				m_nSkateBrokenBones;
+	int				m_nSkateBailScore;
 	// Trick scoring (owner only), read by CHudSkateTricks.
 	int				m_nSkateTrickSeq;
 	char			m_szSkateTrick[ 64 ];

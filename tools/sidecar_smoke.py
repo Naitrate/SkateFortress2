@@ -16,6 +16,11 @@ import sys
 
 HELLO, WORLD, SPAWN, STEP, DESPAWN = 1, 2, 3, 4, 5
 IN_JUMP = 1 << 1
+IN_GRENADE1 = 1 << 23   # the mod's Bail (dive) action
+BONES = ["board root", "skull", "neck", "left wrist", "left forearm", "left humerus", "left collarbone",
+         "right wrist", "right forearm", "right humerus", "right collarbone", "upper back", "ribs",
+         "spine", "lower back", "left toes", "left ankle", "left shin", "left femur", "right toes",
+         "right ankle", "right shin", "right femur", "pelvis"]
 
 
 class Library:
@@ -110,6 +115,7 @@ def main():
     parser.add_argument("--yaw", type=float)
     parser.add_argument("--bail-at", type=float, help="force a wipeout at this time (seconds)")
     parser.add_argument("--velocity", type=float, nargs=3, default=[0.0, 0.0, 0.0], help="spawn velocity (units/s), e.g. mid rocket jump")
+    parser.add_argument("--dive-at", type=float, help="press the Bail (dive) button at this time (seconds)")
     parser.add_argument("--kick", type=float, nargs=4, metavar=("T", "VX", "VY", "VZ"), help="add this velocity (units/s) at time T, like an explosion")
     args = parser.parse_args()
 
@@ -141,6 +147,7 @@ def main():
     ticks = int(args.seconds / dt)
     last_state = None
     last_seq = None
+    last_breaks = 0
     for i in range(ticks):
         t = i * dt
         buttons = 0
@@ -154,6 +161,8 @@ def main():
         elif 3.1 <= t < 3.15:
             mouse_y = -200.0
         flags = 1 if args.bail_at is not None and args.bail_at <= t < args.bail_at + dt else 0
+        if args.dive_at is not None and args.dive_at <= t < args.dive_at + 0.1:
+            buttons |= IN_GRENADE1
         kick = args.kick[1:] if args.kick and args.kick[0] <= t < args.kick[0] + dt else (0.0, 0.0, 0.0)
         payload = struct.pack("<IfIffffIff3f", 1, dt, buttons, forward, 0.0, 0.0, mouse_y, flags, 0.0, 0.0, *kick)
         body = request(sock, STEP, payload)
@@ -168,6 +177,10 @@ def main():
         seq, n = struct.unpack_from("<II", body, off)
         trick = body[off + 8 : off + 8 + n].decode()
         trick_score, line, mult, total, sflags = struct.unpack_from("<ffffI", body, off + 8 + n)
+        bail, broken, meat, breaks, bone = struct.unpack_from("<IIfII", body, off + 8 + n + 20)
+        if breaks != last_breaks:
+            print(f"   BONE #{breaks}: {BONES[bone] if bone < len(BONES) else bone}  (bail {bail}, score {meat:.0f}, broken {bin(broken).count('1')})")
+            last_breaks = breaks
         if seq != last_seq:
             print(f"   TRICK #{seq} '{trick}' +{trick_score:.0f}  line={line:.0f} x{mult:.1f} total={total:.0f} flags={sflags:03b}")
             last_seq = seq

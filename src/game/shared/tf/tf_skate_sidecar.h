@@ -42,6 +42,13 @@ struct SkateStepResult_t
 	float	flMultiplier;
 	float	flTotalScore;	// banked lines
 	int		nScoreFlags;	// SKATE_SCORE_*
+
+	// Hall of Meat (the engine judges each bail by its ragdoll's impacts).
+	int		nBail;			// increments when a bail starts
+	int		nBrokenBones;	// this bail's broken bones, bit per SKATE_BONE_*
+	float	flBailScore;	// this bail's score
+	int		nBreaks;		// increments per broken bone
+	int		nLastBreak;		// the latest broken bone
 };
 
 struct SkateInput_t

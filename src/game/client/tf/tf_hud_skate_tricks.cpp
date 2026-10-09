@@ -78,6 +78,15 @@ private:
 	void TrackAir( C_TFPlayer *pPlayer );
 	void FormatLength( float flUnits, wchar_t *pszOut, int nOutChars );
 
+	// Hall of Meat: the latest bail's score and broken bones, shown until a
+	// few seconds after its last change.
+	void TrackMeat( C_TFPlayer *pPlayer );
+	void PaintMeat( int w, int h );
+	int		m_nMeatBail;
+	int		m_nMeatScore;
+	int		m_nMeatBones;
+	float	m_flMeatTime;
+
 	vgui::HFont m_hNameFont;
 	vgui::HFont m_hLineFont;
 	vgui::HFont m_hSmallFont;
@@ -106,6 +115,8 @@ CHudSkateTricks::CHudSkateTricks( const char *pElementName )
 	m_flAirSeconds = m_flAirDistance = m_flAirHeight = m_flAirDrop = 0.0f;
 	m_bAirBest = false;
 	m_flBestAirSeconds = 0.0f;
+	m_nMeatBail = m_nMeatScore = m_nMeatBones = 0;
+	m_flMeatTime = -100.0f;
 	m_hNameFont = m_hLineFont = m_hSmallFont = vgui::INVALID_FONT;
 }
 
@@ -141,6 +152,7 @@ void CHudSkateTricks::OnThink()
 	{
 		Track( pPlayer );
 		TrackAir( pPlayer );
+		TrackMeat( pPlayer );
 	}
 	else if ( m_bTracking )
 	{
@@ -186,6 +198,62 @@ void CHudSkateTricks::TrackAir( C_TFPlayer *pPlayer )
 }
 
 // Hammer units (1 unit = 1 inch at skate_world_scale 0.0254) as m or ft.
+static const float SKATE_HUD_MEAT_TIME = 5.0f;
+static void SkateFormatPoints( int nPoints, wchar_t *pszOut, int nOutChars );
+
+void CHudSkateTricks::TrackMeat( C_TFPlayer *pPlayer )
+{
+	if ( pPlayer->m_nSkateBail != m_nMeatBail )
+	{
+		m_nMeatBail = pPlayer->m_nSkateBail;
+		m_nMeatScore = m_nMeatBones = 0;
+	}
+	if ( pPlayer->m_nSkateBailScore != m_nMeatScore || pPlayer->m_nSkateBrokenBones != m_nMeatBones )
+	{
+		m_nMeatScore = pPlayer->m_nSkateBailScore;
+		m_nMeatBones = pPlayer->m_nSkateBrokenBones;
+		m_flMeatTime = gpGlobals->curtime;
+	}
+}
+
+void CHudSkateTricks::PaintMeat( int w, int h )
+{
+	float flAge = gpGlobals->curtime - m_flMeatTime;
+	if ( m_nMeatScore <= 0 || flAge > SKATE_HUD_MEAT_TIME )
+		return;
+	int nAlpha = (int)( 255 * clamp( ( SKATE_HUD_MEAT_TIME - flAge ) / 0.75f, 0.0f, 1.0f ) );
+	int x = (int)( w * 0.03f );
+	int y = (int)( h * 0.42f );
+	wchar_t szText[ 128 ], szPoints[ 48 ];
+	DrawText( m_hLineFont, x, y, L"HALL OF MEAT", Color( 235, 80, 60, nAlpha ), false );
+	y += vgui::surface()->GetFontTall( m_hLineFont ) + 2;
+	SkateFormatPoints( m_nMeatScore, szPoints, ARRAYSIZE( szPoints ) );
+	V_snwprintf( szText, ARRAYSIZE( szText ), L"$%ls", szPoints );
+	DrawText( m_hNameFont, x, y, szText, Color( 255, 215, 90, nAlpha ), false );
+	y += vgui::surface()->GetFontTall( m_hNameFont ) + 4;
+
+	int nSmallTall = vgui::surface()->GetFontTall( m_hSmallFont );
+	int nShown = 0, nBroken = 0;
+	for ( int i = 1; i < SKATE_BONE_COUNT; ++i )
+	{
+		if ( !( m_nMeatBones & ( 1 << i ) ) )
+			continue;
+		++nBroken;
+		if ( nShown < 8 )
+		{
+			V_snwprintf( szText, ARRAYSIZE( szText ), L"broken %hs", g_pszSkateBoneNames[i] );
+			DrawText( m_hSmallFont, x, y, szText, Color( 255, 255, 255, nAlpha ), false );
+			y += nSmallTall + 1;
+			++nShown;
+		}
+	}
+	if ( nBroken > nShown )
+	{
+		V_snwprintf( szText, ARRAYSIZE( szText ), L"and %d more", nBroken - nShown );
+		DrawText( m_hSmallFont, x, y, szText, Color( 255, 255, 255, nAlpha ), false );
+	}
+}
+
 void CHudSkateTricks::FormatLength( float flUnits, wchar_t *pszOut, int nOutChars )
 {
 	if ( cl_skate_hud_units.GetBool() )
@@ -301,6 +369,7 @@ void CHudSkateTricks::Paint()
 	const int cx = w / 2;
 	int y = (int)( h * 0.70f );
 	const float flNow = gpGlobals->curtime;
+	PaintMeat( w, h );
 	wchar_t szText[ 128 ], szPoints[ 48 ];
 
 	// Line score / result, the anchor of the feed.

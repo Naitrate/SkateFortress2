@@ -138,6 +138,14 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"skate_hall_of_meat"
+	{
+		"Hall of Meat (when you host)"
+		"Bones broken in a bail cost health, with a crack for each. Bail on purpose with the Bail / dive control (F)."
+		{ BOOL }
+		{ "1" }
+	}
+
 	"cl_skate_hud_units"
 	{
 		"Skate HUD units"

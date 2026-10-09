@@ -763,6 +763,9 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayer, DT_TFLocalPlayerExclusive )
 	SendPropArray3( SENDINFO_ARRAY3( m_nSkateFlagBits ), SendPropInt( SENDINFO_ARRAY( m_nSkateFlagBits ), 4, SPROP_UNSIGNED ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_vecSkateFlagImpulse ), SendPropVector( SENDINFO_ARRAY( m_vecSkateFlagImpulse ), -1, SPROP_NOSCALE ) ),
 	SendPropVector( SENDINFO( m_vecSkateSpawnVelocity ), -1, SPROP_NOSCALE ),
+	SendPropInt( SENDINFO( m_nSkateBail ), -1, SPROP_VARINT ),
+	SendPropInt( SENDINFO( m_nSkateBrokenBones ), SKATE_BONE_COUNT, SPROP_UNSIGNED ),
+	SendPropInt( SENDINFO( m_nSkateBailScore ), -1, SPROP_VARINT ),
 
 END_SEND_TABLE()
 
@@ -3173,9 +3176,12 @@ void CTFPlayer::Precache()
 {
 	VPROF_BUDGET( "CTFPlayer::Precache", VPROF_BUDGETGROUP_PLAYER );
 
-	// tf2-skate: skater collisions and head stomps (tf_player_skate.cpp).
+	// tf2-skate: skater collisions and head stomps, and Hall of Meat bone
+	// breaks (tf_player_skate.cpp).
 	PrecacheScriptSound( "Weapon_Mantreads.Impact" );
 	PrecacheScriptSound( "Flesh.ImpactHard" );
+	PrecacheScriptSound( "Flesh.Break" );
+	PrecacheScriptSound( "Halloween.HammerImpactBloodyBoneCrunch" );
 	
 	/*
 	Note: All TFPlayer specific must go inside PrecacheTFPlayer()

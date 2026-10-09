@@ -13,6 +13,7 @@
 //! | attack / attack2     | IN_ATTACK*  | LT / RT      |
 //! | +speed / attack3     | IN_SPEED/ATTACK3 | LB / RB |
 //! | +walk                | IN_WALK     | left stick click |
+//! | (skate bail)         | IN_GRENADE1 | both triggers + both stick clicks: Skate's manual bail |
 //!
 //! With a game controller the client sets IN_BULLRUSH (unused by TF2) and
 //! sends the raw right stick, up positive, in mousedx/mousedy (+-32767); the
@@ -28,10 +29,14 @@ const IN_RELOAD: u32 = 1 << 13;
 const IN_SPEED: u32 = 1 << 17;
 const IN_WALK: u32 = 1 << 18;
 const IN_BULLRUSH: u32 = 1 << 22;
+/// The mod's bail ("dive") action: Skate 3's manual bail takes both triggers
+/// fully pulled with both sticks clicked (WipeOutRequest, wipeout_intentions).
+const IN_GRENADE1: u32 = 1 << 23;
 const IN_ATTACK3: u32 = 1 << 25;
 
 // XInput wButtons.
 const PAD_LEFT_THUMB: u16 = 0x0040;
+const PAD_RIGHT_THUMB: u16 = 0x0080;
 const PAD_LEFT_SHOULDER: u16 = 0x0100;
 const PAD_RIGHT_SHOULDER: u16 = 0x0200;
 const PAD_A: u16 = 0x1000;
@@ -127,7 +132,11 @@ impl VirtualPad {
                 buttons |= pad;
             }
         }
-        let trigger = |bit| if self.buttons & bit != 0 { 255 } else { 0 };
+        let bail = self.buttons & IN_GRENADE1 != 0;
+        if bail {
+            buttons |= PAD_LEFT_THUMB | PAD_RIGHT_THUMB;
+        }
+        let trigger = |bit| if bail || self.buttons & bit != 0 { 255 } else { 0 };
         XboxState {
             buttons,
             triggers: [trigger(IN_ATTACK), trigger(IN_ATTACK2)],
