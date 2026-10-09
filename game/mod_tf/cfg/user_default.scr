@@ -172,7 +172,7 @@ DESCRIPTION INFO_OPTIONS
 	"cl_skate_pad"
 	{
 		"Skate with a game controller"
-		"Sticks and buttons go straight to Skate 3's controls while skating. BACK starts and stops skating."
+		"Sticks and buttons go straight to Skate 3's controls while skating. Hold BACK to start and stop skating; tap it to change class."
 		{ BOOL }
 		{ "1" }
 	}

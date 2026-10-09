@@ -21,4 +21,7 @@ void SkateControlsApplyKeys( CUserCmd *cmd );
 int SkateControlsPadButtons();
 int SkateControlsAllButtons();
 
+// Every tick: the controller BACK hold (+skate_back) that starts/stops skating.
+void SkateControlsThink();
+
 #endif // TF_SKATE_CONTROLS_H

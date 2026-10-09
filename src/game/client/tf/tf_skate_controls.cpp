@@ -95,19 +95,71 @@ static void ApplyControllerLayout()
 		"joy_forwardsensitivity -1; joy_sidesensitivity 1; joy_pitchsensitivity 1; joy_yawsensitivity -1.25;"
 		"joy_response_move 0; joy_response_look 1; joy_lowend 0.65; joy_lowmap 0.15; joy_accelscale 2; joy_accelmax 2;"
 		"joyadvancedupdate; +jlook\n" );
+	// TF2's controller binds (360controller.cfg), which that pad never gets
+	// either. BACK both changes class and starts/stops skating: +skate_back.
+	engine->ClientCmd_Unrestricted(
+#ifdef _WIN32
+		"bind \"Z AXIS POS\" +attack2; bind \"Z AXIS NEG\" +attack;"
+#else
+		"bind L_TRIGGER +attack2; bind R_TRIGGER +attack;"
+#endif
+		"bind A_BUTTON +jump; bind B_BUTTON +reload; bind X_BUTTON +context_action; bind Y_BUTTON togglescores;"
+		"bind L_SHOULDER invprev; bind R_SHOULDER invnext; bind BACK +skate_back; bind START gameui_activate;"
+		"bind STICK1 \"voicemenu 0 0\"; bind STICK2 +duck;"
+		"bind DPAD_UP slot1; bind DPAD_RIGHT slot2; bind DPAD_DOWN slot3; bind DPAD_LEFT slot4; hud_fastswitch 2\n" );
+}
+
+//-----------------------------------------------------------------------------
+// The controller's BACK: tap for the class menu (TF2's BACK), hold to start or
+// stop skating. The hold fires as soon as it's long enough, so the player
+// sees skating start without letting go.
+//-----------------------------------------------------------------------------
+static ConVar cl_skate_back_hold( "cl_skate_back_hold", "0.4", FCVAR_ARCHIVE, "Seconds to hold +skate_back (controller BACK) to start/stop skating; a shorter tap opens the class menu." );
+static float s_flSkateBackDown = -1.0f;
+static bool s_bSkateBackFired = false;
+
+static void SkateBackDown( const CCommand &args )
+{
+	if ( s_flSkateBackDown >= 0.0f )
+		return;	// key repeat, or a second key bound to it
+	s_flSkateBackDown = gpGlobals->realtime;
+	s_bSkateBackFired = false;
+}
+
+static void SkateBackUp( const CCommand &args )
+{
+	if ( s_flSkateBackDown >= 0.0f && !s_bSkateBackFired )
+	{
+		engine->ClientCmd( "changeclass" );
+	}
+	s_flSkateBackDown = -1.0f;
+}
+
+static ConCommand startskateback( "+skate_back", SkateBackDown, "Controller BACK: tap to change class, hold to start or stop skating." );
+static ConCommand endskateback( "-skate_back", SkateBackUp );
+
+void SkateControlsThink()
+{
+	if ( s_flSkateBackDown < 0.0f || s_bSkateBackFired )
+		return;
+	if ( gpGlobals->realtime - s_flSkateBackDown >= cl_skate_back_hold.GetFloat() )
+	{
+		s_bSkateBackFired = true;
+		engine->ClientCmd( "skate_toggle" );
+	}
 }
 
 static ConVar cl_skate_controller_layout( "cl_skate_controller_layout", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN, "Version of the controller stick layout skate_controller_layout_once last applied." );
 
-CON_COMMAND( skate_controller_layout, "Set the controller back to TF2's layout: left stick moves, right stick looks." )
+CON_COMMAND( skate_controller_layout, "Set the controller back to TF2's layout and binds: left stick moves, right stick looks." )
 {
 	ApplyControllerLayout();
-	Msg( "Controller: left stick moves, right stick looks.\n" );
+	Msg( "Controller: left stick moves, right stick looks, TF2's binds; hold BACK to skate.\n" );
 }
 
 CON_COMMAND_F( skate_controller_layout_once, "Apply TF2's controller layout if this install hasn't had it yet (skate.cfg).", FCVAR_HIDDEN )
 {
-	const int nLayout = 2;
+	const int nLayout = 3;
 	if ( cl_skate_controller_layout.GetInt() >= nLayout )
 		return;
 	ApplyControllerLayout();
