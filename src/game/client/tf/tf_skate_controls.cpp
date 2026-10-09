@@ -96,7 +96,8 @@ static void ApplyControllerLayout()
 		"joy_response_move 0; joy_response_look 1; joy_lowend 0.65; joy_lowmap 0.15; joy_accelscale 2; joy_accelmax 2;"
 		"joyadvancedupdate; +jlook\n" );
 	// TF2's controller binds (360controller.cfg), which that pad never gets
-	// either, except that d-pad up starts and stops skating.
+	// either, except for the d-pad: up starts and stops skating, and the rest
+	// is left free (the bumpers switch weapons; left shoves while skating).
 	engine->ClientCmd_Unrestricted(
 #ifdef _WIN32
 		"bind \"Z AXIS POS\" +attack2; bind \"Z AXIS NEG\" +attack;"
@@ -106,7 +107,7 @@ static void ApplyControllerLayout()
 		"bind A_BUTTON +jump; bind B_BUTTON +reload; bind X_BUTTON +context_action; bind Y_BUTTON togglescores;"
 		"bind L_SHOULDER invprev; bind R_SHOULDER invnext; bind BACK changeclass; bind START gameui_activate;"
 		"bind STICK1 \"voicemenu 0 0\"; bind STICK2 +duck;"
-		"bind DPAD_UP skate_toggle; bind DPAD_RIGHT slot2; bind DPAD_DOWN slot3; bind DPAD_LEFT slot4; hud_fastswitch 2\n" );
+		"bind DPAD_UP skate_toggle; unbind DPAD_RIGHT; unbind DPAD_DOWN; unbind DPAD_LEFT; hud_fastswitch 2\n" );
 }
 
 static ConVar cl_skate_controller_layout( "cl_skate_controller_layout", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN, "Version of the controller stick layout skate_controller_layout_once last applied." );
@@ -119,7 +120,7 @@ CON_COMMAND( skate_controller_layout, "Set the controller back to TF2's layout a
 
 CON_COMMAND_F( skate_controller_layout_once, "Apply TF2's controller layout if this install hasn't had it yet (skate.cfg).", FCVAR_HIDDEN )
 {
-	const int nLayout = 4;
+	const int nLayout = 5;
 	if ( cl_skate_controller_layout.GetInt() >= nLayout )
 		return;
 	ApplyControllerLayout();
