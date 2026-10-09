@@ -72,7 +72,7 @@ SKATE_PAD( lb, "L_SHOULDER", "left bumper" );
 SKATE_PAD( rb, "R_SHOULDER", "right bumper" );
 SKATE_PAD( l3, "STICK2", "left stick click" );
 SKATE_PAD( bail, "STICK1", "bail / dive" );
-SKATE_PAD( shove, "DPAD_LEFT", "shove" );
+SKATE_PAD( shove, "LEFT", "shove (d-pad left)" );
 
 // The flick stick (mouse as Skate's right stick). Sent to the server as
 // userinfo; the simulation applies them to this player only.
@@ -98,6 +98,7 @@ static void ApplyControllerLayout()
 	// TF2's controller binds (360controller.cfg), which that pad never gets
 	// either, except for the d-pad: up starts and stops skating, and the rest
 	// is left free (the bumpers switch weapons; left shoves while skating).
+	// The engine names the d-pad UP, RIGHT, DOWN and LEFT.
 	engine->ClientCmd_Unrestricted(
 #ifdef _WIN32
 		"bind \"Z AXIS POS\" +attack2; bind \"Z AXIS NEG\" +attack;"
@@ -107,7 +108,7 @@ static void ApplyControllerLayout()
 		"bind A_BUTTON +jump; bind B_BUTTON +reload; bind X_BUTTON +context_action; bind Y_BUTTON togglescores;"
 		"bind L_SHOULDER invprev; bind R_SHOULDER invnext; bind BACK changeclass; bind START gameui_activate;"
 		"bind STICK1 \"voicemenu 0 0\"; bind STICK2 +duck;"
-		"bind DPAD_UP skate_toggle; unbind DPAD_RIGHT; unbind DPAD_DOWN; unbind DPAD_LEFT; hud_fastswitch 2\n" );
+		"bind UP skate_toggle; unbind RIGHT; unbind DOWN; unbind LEFT; hud_fastswitch 2\n" );
 }
 
 static ConVar cl_skate_controller_layout( "cl_skate_controller_layout", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN, "Version of the controller stick layout skate_controller_layout_once last applied." );
@@ -120,7 +121,7 @@ CON_COMMAND( skate_controller_layout, "Set the controller back to TF2's layout a
 
 CON_COMMAND_F( skate_controller_layout_once, "Apply TF2's controller layout if this install hasn't had it yet (skate.cfg).", FCVAR_HIDDEN )
 {
-	const int nLayout = 5;
+	const int nLayout = 6;
 	if ( cl_skate_controller_layout.GetInt() >= nLayout )
 		return;
 	ApplyControllerLayout();
