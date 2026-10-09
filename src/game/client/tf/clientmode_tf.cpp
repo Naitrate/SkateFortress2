@@ -228,17 +228,18 @@ static bool TauntHandlesKeyInput( int down, ButtonCode_t keynum, const char *psz
 // tf2-skate: while skating, TF2's gameplay binds (weapon slots and the mouse
 // wheel, voice commands like "Medic!", taunts, inspecting...) do nothing; the
 // skate controls come from their own keys (tf_skate_controls.cpp). Binds for
-// talking, menus, the scoreboard and the like still work. Only key presses
+// talking, menus and the like still work. The scoreboard doesn't: a pad's Y
+// opens it in TF2 but steps on and off the board in Skate. Only key presses
 // are blocked, so a "-" release for something held before skating still runs.
 static bool SkateHandlesKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
 {
 	static const char *s_pszAllowed[] =
 	{
-		"skate_", "shoulder_camera_", "toggleconsole", "cancelselect", "gameui", "escape", "+showscores", "showscores",
+		"skate_", "shoulder_camera_", "toggleconsole", "cancelselect", "gameui", "escape",
 		"say", "messagemode", "+voicerecord", "voice_", "screenshot", "jpeg", "devshots",
 		"changeclass", "changeteam", "open_charinfo", "show_", "+show", "menuselect", "quit",
 		"kill", "explode", "retry", "disconnect", "connect", "callvote", "vote", "pause", "exec",
-		"bind", "toggle", "sv_", "cl_", "net_", "mat_", "r_", "snd_", "volume", "record", "stop",
+		"bind", "toggle ", "sv_", "cl_", "net_", "mat_", "r_", "snd_", "volume", "record", "stop",
 	};
 	if ( !down || !pszCurrentBinding || !pszCurrentBinding[0] )
 		return false;
