@@ -7448,3 +7448,16 @@ entity
 	"origin" "0 -900 8"
 	"angles" "0 90 0"
 }
+entity
+{
+	"id" "753"
+	"classname" "light_environment"
+	"origin" "0 0 1984"
+	"angles" "-55 130 0"
+	"pitch" "-55"
+	"_light" "255 238 210 450"
+	"_ambient" "150 175 215 120"
+	"_lightHDR" "-1 -1 -1 1"
+	"_ambientHDR" "-1 -1 -1 1"
+	"SunSpreadAngle" "5"
+}

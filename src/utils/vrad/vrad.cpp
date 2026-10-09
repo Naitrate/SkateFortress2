@@ -9,6 +9,9 @@
 // vrad.c
 
 #include "vrad.h"
+#ifdef POSIX
+#include <unistd.h>
+#endif
 #include "physdll.h"
 #include "lightmap.h"
 #include "tier1/strtools.h"
@@ -2170,7 +2173,12 @@ void VRAD_LoadBSP( char const *pFilename )
 		// Otherwise, try looking in the BIN directory from which we were run from
 		Msg( "Could not find lights.rad in %s.\nTrying VRAD BIN directory instead...\n", 
 			    global_lights );
+#ifdef _WIN32
 		GetModuleFileName( NULL, global_lights, sizeof( global_lights ) );
+#else
+		ssize_t nLen = readlink( "/proc/self/exe", global_lights, sizeof( global_lights ) - 1 );
+		global_lights[ nLen > 0 ? nLen : 0 ] = 0;
+#endif
 		Q_ExtractFilePath( global_lights, global_lights, sizeof( global_lights ) );
 		strcat( global_lights, "lights.rad" );
 	}

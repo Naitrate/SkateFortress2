@@ -14,7 +14,7 @@ CreateInterfaceFn GetPhysicsFactory( void )
 {
 	if ( !pPhysicsModule )
 	{
-		pPhysicsModule = g_pFullFileSystem->LoadModule( "VPHYSICS.DLL" );
+		pPhysicsModule = g_pFullFileSystem->LoadModule( "vphysics.dll" ); // tf2-skate: lowercase finds vphysics.so on Linux
 		if ( !pPhysicsModule )
 			return NULL;
 	}

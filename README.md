@@ -173,15 +173,15 @@ generated (`tools/make_skatepark.py`, into `game/mod_tf/mapsrc/skate_park.vmf`, 
 Hammer opens too) and compiled on Linux:
 
 ```bash
-tools/build_maptools.sh                                   # once: Linux vbsp
+tools/build_maptools.sh                                   # once: Linux vbsp, vvis, vrad
 tools/make_skatepark.py
 tools/compile_map.sh game/mod_tf/mapsrc/skate_park.vmf    # -> game/mod_tf/maps/
 ```
 
 Then `map skate_park` in game. `tools/compile_map.sh` works for any .vmf. It runs
-the Linux port of Valve's `vbsp` (the SDK only builds it for Windows): maps come out
-unlit (fullbright) and without visibility culling, since `vvis` and `vrad` aren't
-ported yet.
+the Linux ports of Valve's `vbsp`, `vvis` and `vrad` (the SDK only builds them for
+Windows), lighting the map for both LDR and HDR. `SKATE_MAP_FAST=1` makes vis and
+lighting quicker and rougher.
 
 ## Multiplayer
 

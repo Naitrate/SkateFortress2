@@ -7,17 +7,23 @@
 //=============================================================================//
 // vis.c
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "vis.h"
 #include "threads.h"
 #include "stdlib.h"
 #include "pacifier.h"
+#ifdef MPI // tf2-skate: VMPI is Windows-only
 #include "vmpi.h"
 #include "mpivis.h"
+#endif
 #include "tier1/strtools.h"
 #include "collisionutils.h"
 #include "tier0/icommandline.h"
+#ifdef MPI
 #include "vmpi_tools_shared.h"
+#endif
 #include "ilaunchabledll.h"
 #include "tools_minidump.h"
 #include "loadcmdline.h"
@@ -84,7 +90,7 @@ winding_t *NewWinding (int points)
 	if (points > MAX_POINTS_ON_WINDING)
 		Error ("NewWinding: %i points, max %d", points, MAX_POINTS_ON_WINDING);
 	
-	size = (int)(&((winding_t *)0)->points[points]);
+	size = (int)(intp)(&((winding_t *)0)->points[points]);
 	w = (winding_t*)malloc (size);
 	memset (w, 0, size);
 	

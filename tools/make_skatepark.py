@@ -277,6 +277,11 @@ def build():
         for k in range(4):
             m.entity("info_player_teamspawn", (x + (k % 2) * 64, -900 - (k // 2) * 64, 8), TeamNum=team, angles="0 90 0")
     m.entity("info_player_start", (0, -900, 8), angles="0 90 0")
+    # Light (tools/compile_map.sh runs vrad): an afternoon sun through the
+    # sky roof, and a blue sky fill so the shaded sides of ramps still read.
+    m.entity("light_environment", (0, 0, H - 64), angles="-55 130 0", pitch="-55",
+             **{"_light": "255 238 210 450", "_ambient": "150 175 215 120",
+                "_lightHDR": "-1 -1 -1 1", "_ambientHDR": "-1 -1 -1 1", "SunSpreadAngle": "5"})
     return m
 
 
