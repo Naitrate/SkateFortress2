@@ -235,7 +235,7 @@ static bool SkateHandlesKeyInput( int down, ButtonCode_t keynum, const char *psz
 {
 	static const char *s_pszAllowed[] =
 	{
-		"skate_", "+skate_", "shoulder_camera_", "toggleconsole", "cancelselect", "gameui", "escape",
+		"skate_", "shoulder_camera_", "toggleconsole", "cancelselect", "gameui", "escape",
 		"say", "messagemode", "+voicerecord", "voice_", "screenshot", "jpeg", "devshots",
 		"changeclass", "changeteam", "open_charinfo", "show_", "+show", "menuselect", "quit",
 		"kill", "explode", "retry", "disconnect", "connect", "callvote", "vote", "pause", "exec",
@@ -1703,7 +1703,6 @@ static void SkateApplyPad( CUserCmd *cmd )
 bool ClientModeTFNormal::CreateMove( float flInputSampleTime, CUserCmd *cmd )
 {
 	bool bResult = BaseClass::CreateMove( flInputSampleTime, cmd );
-	SkateControlsThink();
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( pPlayer && pPlayer->m_Shared.InCond( TF_COND_SKATING ) )
 	{
