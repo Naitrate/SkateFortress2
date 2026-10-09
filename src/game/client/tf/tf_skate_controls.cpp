@@ -94,7 +94,7 @@ static void ApplyControllerLayout()
 		"joy_advanced 1; joy_advaxisx 3; joy_advaxisy 1; joy_advaxisz 0; joy_advaxisr 2; joy_advaxisu 4; joy_advaxisv 0;"
 		"joy_forwardsensitivity -1; joy_sidesensitivity 1; joy_pitchsensitivity 1; joy_yawsensitivity -1.25;"
 		"joy_response_move 0; joy_response_look 1; joy_lowend 0.65; joy_lowmap 0.15; joy_accelscale 2; joy_accelmax 2;"
-		"joyadvancedupdate\n" );
+		"joyadvancedupdate; +jlook\n" );
 }
 
 static ConVar cl_skate_controller_layout( "cl_skate_controller_layout", "0", FCVAR_ARCHIVE | FCVAR_HIDDEN, "Version of the controller stick layout skate_controller_layout_once last applied." );
@@ -107,7 +107,7 @@ CON_COMMAND( skate_controller_layout, "Set the controller back to TF2's layout: 
 
 CON_COMMAND_F( skate_controller_layout_once, "Apply TF2's controller layout if this install hasn't had it yet (skate.cfg).", FCVAR_HIDDEN )
 {
-	const int nLayout = 1;
+	const int nLayout = 2;
 	if ( cl_skate_controller_layout.GetInt() >= nLayout )
 		return;
 	ApplyControllerLayout();

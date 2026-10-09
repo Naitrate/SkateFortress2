@@ -1644,11 +1644,13 @@ void ClientModeTFNormal::PostRenderVGui()
 // the sidecar treats mousedx/dy as a stick position instead of mouse motion.
 //-----------------------------------------------------------------------------
 ConVar cl_skate_pad( "cl_skate_pad", "1", FCVAR_ARCHIVE, "Use a game controller's raw sticks and buttons while skating (needs joystick 1)." );
-ConVar cl_skate_pad_axes( "cl_skate_pad_axes", "0 1 3 5", FCVAR_ARCHIVE, "Joystick axis indices for left X, left Y, right X, right Y. Find yours with skate_pad_debug." );
+ConVar cl_skate_pad_axes( "cl_skate_pad_axes", "auto", FCVAR_ARCHIVE, "Joystick axis indices for left X, left Y, right X, right Y, or auto. Find yours with skate_pad_debug." );
 
 static int SkatePadAxis( int nIndex )
 {
-	int nAxes[4] = { 0, 1, 3, 5 };
+	// The input system puts the right stick on U (X) and R (Y), whose indices
+	// differ between Linux and Windows (InputEnums.h).
+	int nAxes[4] = { JOY_AXIS_X, JOY_AXIS_Y, JOY_AXIS_U, JOY_AXIS_R };
 	sscanf( cl_skate_pad_axes.GetString(), "%d %d %d %d", &nAxes[0], &nAxes[1], &nAxes[2], &nAxes[3] );
 	int nAxis = clamp( nAxes[ nIndex ], 0, MAX_JOYSTICK_AXES - 1 );
 	return inputsystem->GetAnalogValue( JOYSTICK_AXIS( 0, nAxis ) );
