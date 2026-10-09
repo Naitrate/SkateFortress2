@@ -34,8 +34,9 @@ COPY = 6
 
 
 def script(seconds, seed):
-    """Per-step (buttons, forward, side, mouse_x, mouse_y, flags): a scripted
-    push and ollie, then seeded random riding with flicks and a forced bail."""
+    """Per-step (buttons, forward, side, mouse_x, mouse_y, flags, impulse xyz):
+    a scripted push and ollie, then seeded random riding with flicks, a forced
+    bail, and now and then a push from outside (an explosion's knockback)."""
     rng = random.Random(seed)
     steps = []
     held = (0, 1.0, 0.0)
@@ -43,6 +44,7 @@ def script(seconds, seed):
         t = i * DT
         mouse = (0.0, 0.0)
         flags = 0
+        impulse = (0.0, 0.0, 0.0)
         if t < 4.0:
             buttons = IN_JUMP if 0.2 < t < 0.5 or 1.2 < t < 1.5 else 0
             forward, side = (1.0 if t < 3.0 else 0.0), 0.0
@@ -59,7 +61,9 @@ def script(seconds, seed):
                 mouse = (rng.uniform(-150, 150), rng.uniform(-200, 200))
             if abs(t - seconds * 0.7) < DT / 2:
                 flags = 1   # STEP_FORCE_WIPEOUT
-        steps.append((buttons, forward, side, *mouse, flags))
+            if i % 260 == 200:
+                impulse = (rng.uniform(-400, 400), rng.uniform(-400, 400), rng.uniform(100, 600))
+        steps.append((buttons, forward, side, *mouse, flags, *impulse))
     return steps
 
 
@@ -71,17 +75,17 @@ class Instance:
 
     def spawn(self, ids):
         for sid in ids:
-            request(self.lib, SPAWN, struct.pack("<I3ff", sid, *self.origin, self.yaw) + string(""))
+            request(self.lib, SPAWN, struct.pack("<I3ff", sid, *self.origin, self.yaw) + string("") + struct.pack("<3f", 0, 0, 0))
         for sid in ids:
-            while struct.unpack_from("<I", self.step(sid, (0, 0.0, 0.0, 0.0, 0.0, 0), dt=0.0))[0] == LOADING:
+            while struct.unpack_from("<I", self.step(sid, (0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0), dt=0.0))[0] == LOADING:
                 time.sleep(0.005)
 
     def copy(self, src, dst):
         request(self.lib, COPY, struct.pack("<II", src, dst))
 
     def step(self, sid, inputs, dt=DT):
-        buttons, forward, side, mx, my, flags = inputs
-        return request(self.lib, STEP, struct.pack("<IfIffffIff", sid, dt, buttons, forward, side, mx, my, flags, 0.0, 0.0))
+        buttons, forward, side, mx, my, flags, ix, iy, iz = inputs
+        return request(self.lib, STEP, struct.pack("<IfIffffIff3f", sid, dt, buttons, forward, side, mx, my, flags, 0.0, 0.0, ix, iy, iz))
 
 
 def summary(reply):
@@ -158,7 +162,7 @@ def main():
     rng = random.Random(args.seed + 7)
     tail = []
     for inputs in steps[split:]:
-        copy_inst.step(1, (rng.choice([0, IN_JUMP]), rng.uniform(-1, 1), rng.uniform(-1, 1), 0.0, 0.0, 0))  # the original wanders off
+        copy_inst.step(1, (rng.choice([0, IN_JUMP]), rng.uniform(-1, 1), rng.uniform(-1, 1), 0.0, 0.0, 0, 0.0, 0.0, 0.0))  # the original wanders off
         tail.append(copy_inst.step(2, inputs))
     ok &= compare("copy", ref, head + tail)
 
@@ -169,7 +173,9 @@ def main():
     rewind_inst = Instance(args.lib, root, bsp, origin, yaw)
     rewind_inst.spawn([1])
     rewind_inst.copy(1, 2)
-    guesses = [inputs[:5] + (1,) if i % 300 == 150 else inputs for i, inputs in enumerate(steps)]
+    # The client can't know a server-forced bail or a push from outside: it
+    # guesses a bail now and then, and never sees the pushes.
+    guesses = [inputs[:5] + ((1,) if i % 300 == 150 else (inputs[5],)) + (0.0, 0.0, 0.0) for i, inputs in enumerate(steps)]
     window = 8                                  # ~120 ms of commands in flight
     predicted = []
     confirmed = 0

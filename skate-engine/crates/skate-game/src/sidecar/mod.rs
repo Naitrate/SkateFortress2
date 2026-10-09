@@ -34,9 +34,11 @@ use std::{
     time::Instant,
 };
 
-pub(crate) const PROTOCOL_VERSION: u32 = 9;
+pub(crate) const PROTOCOL_VERSION: u32 = 10;
 /// STEP flag: start a wipeout now (e.g. the TF2 player hit deep water).
 const STEP_FORCE_WIPEOUT: u32 = 1;
+/// PhysicalStateId of the first tick, which places a new skater.
+const SPAWN_STATE: u32 = 700;
 /// STEP flag: reply with the previous step's result and run this one in the
 /// background, so many skaters (bots) step in parallel. Adds one usercmd of
 /// latency, which only matters for the player holding the controls.
@@ -119,6 +121,10 @@ struct Skater {
     /// current pose by the accumulator fraction, so the 60 Hz simulation reads
     /// smoothly at TF2's 66.7 Hz instead of skipping every tenth usercmd.
     previous: Option<Pose>,
+    /// The spawn velocity (native m/s). The first native tick places the
+    /// skater (state 700) and settles its bodies at rest, so this is added
+    /// once that tick has run.
+    spawn_velocity: Option<[f32; 3]>,
 }
 
 struct StepJob {
@@ -128,6 +134,8 @@ struct StepJob {
     /// The player's flick-stick gain and decay (0 = keep the default).
     mouse_gain: f32,
     mouse_decay: f32,
+    /// Velocity added before this step (native m/s): explosions, knockback.
+    impulse: [f32; 3],
 }
 
 /// Work for a skater's thread, in order.
@@ -328,14 +336,19 @@ impl Server {
         let yaw = reader.f32()?;
         // The server's skate_difficulty; empty keeps the sidecar's default.
         let difficulty_name = reader.string()?;
+        // The TF2 player's velocity: a skater started mid rocket jump keeps
+        // flying (and lands on the board) instead of starting from rest.
+        let velocity = reader.vec3()?;
         let world = self.world.as_ref().ok_or("SPAWN before WORLD")?;
         let scale = world.scale;
         let map = skate_map_for(world, to_native(origin, scale), yaw, false);
         let difficulty = if difficulty_name.trim().is_empty() { self.difficulty } else { Difficulty::parse(difficulty_name.trim())? };
         let (root, build_graphs) = (self.root.clone(), self.graphs.clone());
         let (animation, collision) = (self.animation.clone(), world.collision.share());
+        let start_velocity = to_native(velocity, scale);
         let handle = self.start_worker(id, yaw, scale, move || {
-            let skater = build_skater(&root, &build_graphs, difficulty, &map, collision, animation)?;
+            let mut skater = build_skater(&root, &build_graphs, difficulty, &map, collision, animation)?;
+            skater.spawn_velocity = (start_velocity != [0.0; 3]).then_some(start_velocity);
             // Loading parses ~35 MB of JSON on this thread. glibc keeps
             // each thread's freed heap resident, which cost every skater
             // that much RSS for nothing; hand it back.
@@ -476,6 +489,7 @@ impl Server {
             flags: reader.u32()?,
             mouse_gain: reader.f32()?,
             mouse_decay: reader.f32()?,
+            impulse: reader.vec3()?,
         };
         let world = self.world.as_ref().ok_or("STEP before WORLD")?;
         let skater = self.skaters.get_mut(&id).ok_or_else(|| format!("STEP for unknown skater {id}"))?;
@@ -536,6 +550,7 @@ fn step_skater(
     skater.accumulator -= ticks as f32 * period;
     skater.pad.set_mouse_response(job.mouse_gain, job.mouse_decay);
     skater.pad.accept(&job.command, ticks);
+    add_velocity(skater, to_native(job.impulse, scale));
     if job.flags & STEP_FORCE_WIPEOUT != 0 {
         // Raised as the stock "contact force too high" request; the
         // following tick's state selection turns it into a ragdoll bail.
@@ -562,6 +577,10 @@ fn step_skater(
             skater.controller.tick_input(),
             &mut skater.camera,
         )?;
+        if skater.spawn_velocity.is_some() && skater.runtime.player_state.current() as u32 != SPAWN_STATE {
+            let v = skater.spawn_velocity.take().unwrap_or_default();
+            add_velocity(skater, v);
+        }
     }
     // One second in, the skater is riding with a full animated pose.
     if skater.packet >= 60 && skater.packet - ticks < 60 {
@@ -623,6 +642,7 @@ fn build_skater(
         accumulator: 0.0,
         joints,
         previous: None,
+        spawn_velocity: None,
     })
 }
 
@@ -788,6 +808,26 @@ fn drop_degenerate(mut triangles: Vec<bsp::Triangle>) -> Vec<bsp::Triangle> {
 
 /// Source (x, y, z) inches -> native (x, z, -y) metres. A proper rotation, so
 /// triangle winding and handedness survive.
+/// Adds a velocity (native m/s) to the whole skater: every board body and
+/// every body of the rider's skeleton, so their relative motion, riding or
+/// ragdolling, is unchanged.
+fn add_velocity(skater: &mut Skater, v: [f32; 3]) {
+    if v == [0.0; 3] {
+        return;
+    }
+    let add = |velocity: &mut skate_core::math::Vector3| {
+        velocity.x += v[0];
+        velocity.y += v[1];
+        velocity.z += v[2];
+    };
+    for body in skater.physics.board.bodies_mut().iter_mut() {
+        add(&mut body.rates.linear_velocity);
+    }
+    for body in skater.runtime.skeleton.bodies_mut().iter_mut() {
+        add(&mut body.rates.linear_velocity);
+    }
+}
+
 fn to_native(p: [f32; 3], scale: f32) -> [f32; 3] {
     [p[0] * scale, p[2] * scale, -p[1] * scale]
 }

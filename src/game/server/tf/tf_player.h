@@ -1435,6 +1435,9 @@ public:
 	CNetworkVar( int, m_nSkateFlagCount );
 	CNetworkArray( int, m_nSkateFlagCmd, SKATE_FLAG_HISTORY );
 	CNetworkArray( int, m_nSkateFlagBits, SKATE_FLAG_HISTORY );
+	CNetworkArray( Vector, m_vecSkateFlagImpulse, SKATE_FLAG_HISTORY );	// knockback the server added at those usercmds
+	CNetworkVector( m_vecSkateSpawnVelocity );
+	Vector				m_vecSkateImpulse;	// knockback since the last step, for the skater
 	float				m_flSkateFallSpeed;	// downward speed on the previous step
 	Vector				m_vecSkateVelocity;	// the skater's latest velocity (dropped board, collisions)
 	bool				m_bSkateBailNext;	// a hard collision: wipe out on the next step

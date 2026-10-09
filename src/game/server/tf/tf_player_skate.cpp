@@ -78,8 +78,13 @@ bool CTFPlayer::StartSkating( char *pszError, int nErrorSize )
 	}
 	Vector vecOrigin = GetAbsOrigin();
 	float flYaw = EyeAngles()[ YAW ];
-	if ( !TFSkateSidecar().Spawn( entindex(), vecOrigin, flYaw, skate_difficulty.GetString(), pszError, nErrorSize ) )
+	// The skater carries on at the player's velocity: start skating mid rocket
+	// jump and land on the board.
+	Vector vecVelocity = GetAbsVelocity();
+	if ( !TFSkateSidecar().Spawn( entindex(), vecOrigin, flYaw, skate_difficulty.GetString(), vecVelocity, pszError, nErrorSize ) )
 		return false;
+	m_vecSkateSpawnVelocity = vecVelocity;
+	m_vecSkateImpulse.Init();
 	// The owner's client spawns the same skater to predict it.
 	m_nSkateSpawnSerial = m_nSkateSpawnSerial + 1;
 	m_vecSkateSpawnOrigin = vecOrigin;
@@ -144,6 +149,8 @@ void CTFPlayer::StopSkating()
 void CTFPlayer::SkateMove( float flDeltaTime, const SkateInput_t &playerInput, CMoveData *pMove )
 {
 	SkateInput_t input = playerInput;
+	// Knockback that arrived since the last step (ApplyAbsVelocityImpulse).
+	input.vecImpulse = m_vecSkateImpulse;
 	// Bots step in parallel in the sidecar, one usercmd behind. Players keep
 	// synchronous steps so their own controls have no added latency.
 	if ( IsBot() && skate_bot_pipelined.GetBool() )
@@ -173,7 +180,9 @@ void CTFPlayer::SkateMove( float flDeltaTime, const SkateInput_t &playerInput, C
 	}
 	if ( result.nState == SKATE_STATE_LOADING )
 	{
-		// A few ticks while the sidecar builds the skater: hold still.
+		// A few ticks while the simulation builds the skater: hold still where
+		// it will appear (it starts with the velocity the player had). Keep
+		// any knockback for its first step.
 		pMove->m_vecVelocity = vec3_origin;
 		m_flSkateTime = gpGlobals->curtime;
 		return;
@@ -188,12 +197,14 @@ void CTFPlayer::SkateMove( float flDeltaTime, const SkateInput_t &playerInput, C
 		m_nSkateStartCmd = nCommand;
 	}
 	m_nSkateAckCmd = nCommand;
+	m_vecSkateImpulse.Init();
 	int nForced = input.nFlags & SKATE_STEP_FORCE_WIPEOUT;
-	if ( nForced )
+	if ( nForced || input.vecImpulse != vec3_origin )
 	{
 		int nSlot = m_nSkateFlagCount % SKATE_FLAG_HISTORY;
 		m_nSkateFlagCmd.Set( nSlot, nCommand );
 		m_nSkateFlagBits.Set( nSlot, nForced );
+		m_vecSkateFlagImpulse.Set( nSlot, input.vecImpulse );
 		m_nSkateFlagCount = m_nSkateFlagCount + 1;
 	}
 

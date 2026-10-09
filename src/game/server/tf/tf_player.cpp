@@ -761,6 +761,8 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayer, DT_TFLocalPlayerExclusive )
 	SendPropInt( SENDINFO( m_nSkateFlagCount ), -1, SPROP_VARINT ),
 	SendPropArray3( SENDINFO_ARRAY3( m_nSkateFlagCmd ), SendPropInt( SENDINFO_ARRAY( m_nSkateFlagCmd ), -1, SPROP_VARINT ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_nSkateFlagBits ), SendPropInt( SENDINFO_ARRAY( m_nSkateFlagBits ), 4, SPROP_UNSIGNED ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_vecSkateFlagImpulse ), SendPropVector( SENDINFO_ARRAY( m_vecSkateFlagImpulse ), -1, SPROP_NOSCALE ) ),
+	SendPropVector( SENDINFO( m_vecSkateSpawnVelocity ), -1, SPROP_NOSCALE ),
 
 END_SEND_TABLE()
 
@@ -3399,6 +3401,15 @@ void CTFPlayer::ApplyAbsVelocityImpulse( const Vector &vecImpulse )
 		float flHorizontalScale = TFGameRules()->IsMannVsMachineMode() && IsBot() ? 0.f : 1.5f;
 		vecForce.x *= flHorizontalScale;
 		vecForce.y *= flHorizontalScale;
+	}
+
+	// tf2-skate: a skater's motion belongs to the Skate simulation, which
+	// would overwrite this velocity on its next step; hand the push to it
+	// instead (rockets, airblast, damage knockback, rams).
+	if ( m_Shared.InCond( TF_COND_SKATING ) && IsAlive() )
+	{
+		m_vecSkateImpulse += vecForce * flImpulseScale;
+		return;
 	}
 
 	CBaseMultiplayerPlayer::ApplyAbsVelocityImpulse( vecForce * flImpulseScale );

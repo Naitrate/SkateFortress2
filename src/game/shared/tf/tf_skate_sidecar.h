@@ -52,9 +52,10 @@ struct SkateInput_t
 	float	flMouseX;	// mouse counts since the last usercmd
 	float	flMouseY;
 	int		nFlags;		// SKATE_STEP_*
+	Vector	vecImpulse;	// velocity added before this step (units/s): explosions, knockback
 };
 
-// The skate input of one usercmd (flags left 0). Server and client both use
+// The skate input of one usercmd (flags and impulse left 0). Server and client both use
 // this, so the client's predicted skater gets exactly the server's input.
 void SkateInputFromCmd( const CUserCmd *pCmd, SkateInput_t &input );
 
@@ -92,7 +93,9 @@ public:
 
 	// Starts building skater `id`; Step reports SKATE_STATE_LOADING until it
 	// exists (Poll says without stepping). Fails with a reason.
-	bool Spawn( int id, const Vector &vecOrigin, float flYaw, const char *pszDifficulty, char *pszError, int nErrorSize );
+	// vecVelocity: the player's velocity, so a skater started mid-air (a
+	// rocket jump) keeps flying.
+	bool Spawn( int id, const Vector &vecOrigin, float flYaw, const char *pszDifficulty, const Vector &vecVelocity, char *pszError, int nErrorSize );
 	void Despawn( int id );
 	bool Step( int id, float flDeltaTime, const SkateInput_t &input, float flMouseGain, float flMouseDecay, SkateStepResult_t &result, char *pszError, int nErrorSize );
 	// 1 loaded, 0 still loading, -1 failed.

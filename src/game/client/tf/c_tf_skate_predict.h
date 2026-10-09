@@ -57,6 +57,7 @@ private:
 		bool				bDeepWater;		// at capture, for guessing the water bail
 		bool				bPredicted;		// result is valid
 		int					nServerFlags;	// what the server used (from its flag history)
+		Vector				vecServerImpulse;	// knockback the server added at this command
 		SkateStepResult_t	result;
 	};
 

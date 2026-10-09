@@ -255,6 +255,10 @@ state, position and camera.
 ## Status and known gaps
 
 - **Working, verified headless:** BSP collision extraction (test_hardware: 64k triangles, 3.7k brushes, 525 displacements), spawning at the player's position and yaw, pushing, ollies, air and landing, wipeouts, and the Skate camera.
+- **Momentum carries over, verified headless.** Start skating mid-air (say mid rocket jump) and the skater
+  keeps the player's velocity and lands on the board. Rockets, airblast and other knockback push a
+  skater too: the server hands them to the simulation, and the predicting client rewinds when one
+  arrives. Not yet tried in game.
 - **Prediction is new and untested in game.** Without it, or after it loses sync, your own skater lags by about one round trip.
 - **AEMS sounds** (`.abk` banks: concrete grinds, board scrapes, wheel skids, foot and tail drags, body slides) are extracted but not mapped to events yet. See `docs/skate3-audio-re.md`.
 - **Rails need `skate_rail` entities.** Otherwise grinds work only on edges Skate classifies itself; stock TF2 maps have no rail splines.

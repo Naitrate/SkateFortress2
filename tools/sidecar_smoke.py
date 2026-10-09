@@ -109,6 +109,8 @@ def main():
     parser.add_argument("--origin", type=float, nargs=3)
     parser.add_argument("--yaw", type=float)
     parser.add_argument("--bail-at", type=float, help="force a wipeout at this time (seconds)")
+    parser.add_argument("--velocity", type=float, nargs=3, default=[0.0, 0.0, 0.0], help="spawn velocity (units/s), e.g. mid rocket jump")
+    parser.add_argument("--kick", type=float, nargs=4, metavar=("T", "VX", "VY", "VZ"), help="add this velocity (units/s) at time T, like an explosion")
     args = parser.parse_args()
 
     bsp = open(args.bsp, "rb").read()
@@ -127,11 +129,11 @@ def main():
     print(f"protocol {version}")
     reply = request(sock, WORLD, string("smoke") + struct.pack("<f", args.scale) + struct.pack("<I", len(bsp)) + bsp + struct.pack("<II", 0, 0))  # no extra triangles, no rails
     print("world:", reply[4:].decode())
-    reply = request(sock, SPAWN, struct.pack("<I3ff", 1, *origin, yaw) + string(""))
+    reply = request(sock, SPAWN, struct.pack("<I3ff", 1, *origin, yaw) + string("") + struct.pack("<3f", *args.velocity))
     print("spawn:", reply[4:].decode())
     # The skater loads on a worker thread; STEP answers LOADING until it is ready.
     waited = time.monotonic()
-    while struct.unpack_from("<I", request(sock, STEP, struct.pack("<IfIffffIff", 1, 0.0, 0, 0, 0, 0, 0, 0, 0, 0)))[0] == 0xFFFFFFFF:
+    while struct.unpack_from("<I", request(sock, STEP, struct.pack("<IfIffffIff3f", 1, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)))[0] == 0xFFFFFFFF:
         time.sleep(0.005)
     print(f"skater ready after {time.monotonic() - waited:.2f}s")
 
@@ -152,7 +154,8 @@ def main():
         elif 3.1 <= t < 3.15:
             mouse_y = -200.0
         flags = 1 if args.bail_at is not None and args.bail_at <= t < args.bail_at + dt else 0
-        payload = struct.pack("<IfIffffIff", 1, dt, buttons, forward, 0.0, 0.0, mouse_y, flags, 0.0, 0.0)
+        kick = args.kick[1:] if args.kick and args.kick[0] <= t < args.kick[0] + dt else (0.0, 0.0, 0.0)
+        payload = struct.pack("<IfIffffIff3f", 1, dt, buttons, forward, 0.0, 0.0, mouse_y, flags, 0.0, 0.0, *kick)
         body = request(sock, STEP, payload)
         values = struct.unpack_from("<II" + "f" * 22, body)
         state, native_ticks = values[0], values[1]

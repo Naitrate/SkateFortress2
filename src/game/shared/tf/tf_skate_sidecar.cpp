@@ -41,7 +41,7 @@ enum
 	SKATE_MSG_COPY = 6,
 	SKATE_MSG_POLL = 7,
 };
-static const unsigned int SKATE_PROTOCOL_VERSION = 9;
+static const unsigned int SKATE_PROTOCOL_VERSION = 10;
 // STEP reply state while the sidecar is still building the skater.
 static const unsigned int SKATE_STATE_LOADING_WIRE = 0xFFFFFFFFu;
 
@@ -54,6 +54,7 @@ void SkateInputFromCmd( const CUserCmd *pCmd, SkateInput_t &input )
 	input.flMouseX = (float)pCmd->mousedx;
 	input.flMouseY = (float)pCmd->mousedy;
 	input.nFlags = 0;
+	input.vecImpulse.Init();
 }
 
 CTFSkateSidecar &TFSkateSidecar()
@@ -696,7 +697,7 @@ bool CTFSkateSidecar::IsReady()
 	return m_pHandle && !V_strcmp( m_szWorld, SkateMapName() );
 }
 
-bool CTFSkateSidecar::Spawn( int id, const Vector &vecOrigin, float flYaw, const char *pszDifficulty, char *pszError, int nErrorSize )
+bool CTFSkateSidecar::Spawn( int id, const Vector &vecOrigin, float flYaw, const char *pszDifficulty, const Vector &vecVelocity, char *pszError, int nErrorSize )
 {
 	if ( m_bPreparing )
 	{
@@ -713,6 +714,9 @@ bool CTFSkateSidecar::Spawn( int id, const Vector &vecOrigin, float flYaw, const
 	payload.PutFloat( vecOrigin.z );
 	payload.PutFloat( flYaw );
 	PutString( payload, pszDifficulty );
+	payload.PutFloat( vecVelocity.x );
+	payload.PutFloat( vecVelocity.y );
+	payload.PutFloat( vecVelocity.z );
 
 	CUtlBuffer reply;
 	if ( !Request( SKATE_MSG_SPAWN, payload, reply, pszError, nErrorSize ) )
@@ -800,6 +804,9 @@ bool CTFSkateSidecar::Step( int id, float flDeltaTime, const SkateInput_t &input
 	// The player's own flick-stick feel (0 keeps the defaults).
 	payload.PutFloat( flMouseGain );
 	payload.PutFloat( flMouseDecay );
+	payload.PutFloat( input.vecImpulse.x );
+	payload.PutFloat( input.vecImpulse.y );
+	payload.PutFloat( input.vecImpulse.z );
 
 	CUtlBuffer reply;
 	if ( !Request( SKATE_MSG_STEP, payload, reply, pszError, nErrorSize ) )

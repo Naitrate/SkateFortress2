@@ -13,9 +13,10 @@
 //   - skater 2 (confirmed) follows a little behind, running only commands
 //     the server has acknowledged, with the server's own flags.
 //
-//   The only input the client can't know in advance is a server-forced
-//   wipeout (slamming into a player, deep water); the server reports those
-//   per command. When one differs from what was predicted, skater 1 is put
+//   The only input the client can't know in advance is what the server
+//   does to the skater: a forced wipeout (slamming into a player, deep
+//   water) or knockback (rockets, airblast); the server reports those per
+//   command. When one differs from what was predicted, skater 1 is put
 //   back to a copy of skater 2 and replays the commands since. Skater 2's
 //   position is checked against the server's at every acknowledged command;
 //   if they ever differ the prediction has lost sync, and the server's
@@ -171,6 +172,7 @@ void CTFSkatePredictor::Capture( C_TFPlayer *pPlayer, const CUserCmd *pCmd )
 	record.bDeepWater = pPlayer->GetWaterLevel() >= WL_Waist;
 	record.bPredicted = false;
 	record.nServerFlags = 0;
+	record.vecServerImpulse.Init();
 	m_nLatest = MAX( m_nLatest, pCmd->command_number );
 }
 
@@ -211,6 +213,15 @@ bool CTFSkatePredictor::StepPredicted( int nCommand )
 	}
 	Record_t *pRecord = Find( nCommand );
 	pRecord->input.nFlags = GuessFlags( nCommand );
+	// Knockback is the server's to report; until it has, predict none.
+	if ( nCommand <= m_nConfirmedTo )
+	{
+		pRecord->input.vecImpulse = pRecord->vecServerImpulse;
+	}
+	else
+	{
+		pRecord->input.vecImpulse.Init();
+	}
 	char szError[ 256 ];
 	if ( !TFSkateSidecar().Step( SKATER_PREDICTED, TICK_INTERVAL, pRecord->input, pRecord->flMouseGain, pRecord->flMouseDecay, pRecord->result, szError, sizeof( szError ) ) )
 	{
@@ -237,6 +248,7 @@ void CTFSkatePredictor::ReadServerFlags( C_TFPlayer *pPlayer )
 		if ( pRecord )
 		{
 			pRecord->nServerFlags = pPlayer->m_nSkateFlagBits[ nSlot ];
+			pRecord->vecServerImpulse = pPlayer->m_vecSkateFlagImpulse[ nSlot ];
 		}
 	}
 	m_nFlagCount = nCount;
@@ -263,6 +275,7 @@ void CTFSkatePredictor::Confirm( C_TFPlayer *pPlayer, int nBudget )
 		}
 		SkateInput_t input = pRecord->input;
 		input.nFlags = pRecord->nServerFlags;
+		input.vecImpulse = pRecord->vecServerImpulse;
 		SkateStepResult_t confirmed;
 		char szError[ 256 ];
 		if ( !TFSkateSidecar().Step( SKATER_CONFIRMED, TICK_INTERVAL, input, pRecord->flMouseGain, pRecord->flMouseDecay, confirmed, szError, sizeof( szError ) ) )
@@ -271,11 +284,12 @@ void CTFSkatePredictor::Confirm( C_TFPlayer *pPlayer, int nBudget )
 			return;
 		}
 		m_nConfirmedTo = nCommand;
-		if ( pRecord->input.nFlags != pRecord->nServerFlags )
+		if ( pRecord->input.nFlags != pRecord->nServerFlags || pRecord->input.vecImpulse != pRecord->vecServerImpulse )
 		{
 			// Guessed wrong: this command's answer is the confirmed one, and
 			// everything after it must be replayed from here.
 			pRecord->input.nFlags = pRecord->nServerFlags;
+			pRecord->input.vecImpulse = pRecord->vecServerImpulse;
 			pRecord->result = confirmed;
 			nRewindFrom = nCommand;
 		}
@@ -312,7 +326,7 @@ void CTFSkatePredictor::Confirm( C_TFPlayer *pPlayer, int nBudget )
 		}
 		if ( cl_skate_predict_debug.GetBool() )
 		{
-			Msg( "[skate predict] server bail at usercmd %d: rewound and replayed %d commands\n", nRewindFrom, nReplayTo - m_nConfirmedTo );
+			Msg( "[skate predict] server bail or knockback at usercmd %d: rewound and replayed %d commands\n", nRewindFrom, nReplayTo - m_nConfirmedTo );
 		}
 	}
 }
@@ -355,7 +369,7 @@ void CTFSkatePredictor::Update( C_TFPlayer *pPlayer )
 			return;
 		}
 		char szError[ 256 ];
-		if ( !sim.Spawn( SKATER_PREDICTED, pPlayer->m_vecSkateSpawnOrigin, pPlayer->m_flSkateSpawnYaw, pPlayer->m_szSkateDifficulty, szError, sizeof( szError ) ) )
+		if ( !sim.Spawn( SKATER_PREDICTED, pPlayer->m_vecSkateSpawnOrigin, pPlayer->m_flSkateSpawnYaw, pPlayer->m_szSkateDifficulty, pPlayer->m_vecSkateSpawnVelocity, szError, sizeof( szError ) ) )
 		{
 			Fail( "spawn failed: %s", szError );
 			return;

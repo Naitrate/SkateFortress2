@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 	free(call(WORLD, &b, &n));
 
 	put_u32(&b, 1); put_f32(&b, (float)atof(argv[4])); put_f32(&b, (float)atof(argv[5])); put_f32(&b, (float)atof(argv[6]));
-	put_f32(&b, (float)atof(argv[7])); put_str(&b, "");
+	put_f32(&b, (float)atof(argv[7])); put_str(&b, ""); put_f32(&b, 0.0f); put_f32(&b, 0.0f); put_f32(&b, 0.0f);
 	free(call(SPAWN, &b, &n));
 
 	/* Wait for loading without stepping: a zero-length STEP answers LOADING. */
@@ -87,6 +87,7 @@ int main(int argc, char **argv) {
 		put_u32(&b, 1); put_f32(&b, 0.0f); put_u32(&b, 0);
 		for (int i = 0; i < 4; ++i) put_f32(&b, 0.0f);
 		put_u32(&b, 0); put_f32(&b, 0.0f); put_f32(&b, 0.0f);
+		put_f32(&b, 0.0f); put_f32(&b, 0.0f); put_f32(&b, 0.0f);
 		unsigned char *r = call(STEP, &b, &n);
 		uint32_t state; memcpy(&state, r, 4); free(r);
 		if (state != 0xFFFFFFFFu) break;
@@ -107,6 +108,9 @@ int main(int argc, char **argv) {
 		if (i == steps / 2) flags = 1;	/* a forced bail */
 		put_u32(&b, 1); put_f32(&b, 0.015f); put_u32(&b, buttons); put_f32(&b, forward); put_f32(&b, side);
 		put_f32(&b, mx); put_f32(&b, my); put_u32(&b, flags); put_f32(&b, 0.0f); put_f32(&b, 0.0f);
+		/* a push from outside now and then, like an explosion */
+		if (i % 260 == 200) { put_f32(&b, unit() * 800.0f - 400.0f); put_f32(&b, unit() * 800.0f - 400.0f); put_f32(&b, 100.0f + unit() * 500.0f); }
+		else { put_f32(&b, 0.0f); put_f32(&b, 0.0f); put_f32(&b, 0.0f); }
 		unsigned char *r = call(STEP, &b, &n);
 		uint32_t len = (uint32_t)n;
 		fwrite(&len, 4, 1, out); fwrite(r, 1, n, out);

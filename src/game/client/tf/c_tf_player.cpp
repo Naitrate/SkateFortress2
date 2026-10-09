@@ -3776,6 +3776,8 @@ BEGIN_RECV_TABLE_NOBASE( C_TFPlayer, DT_TFLocalPlayerExclusive )
 	RecvPropInt( RECVINFO( m_nSkateFlagCount ) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_nSkateFlagCmd ), RecvPropInt( RECVINFO( m_nSkateFlagCmd[0] ) ) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_nSkateFlagBits ), RecvPropInt( RECVINFO( m_nSkateFlagBits[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_vecSkateFlagImpulse ), RecvPropVector( RECVINFO( m_vecSkateFlagImpulse[0] ) ) ),
+	RecvPropVector( RECVINFO( m_vecSkateSpawnVelocity ) ),
 
 END_RECV_TABLE()
 
@@ -3936,6 +3938,11 @@ C_TFPlayer::C_TFPlayer() :
 	m_nSkateWorldCRC = m_nSkateStartCmd = m_nSkateAckCmd = m_nSkateFlagCount = 0;
 	V_memset( m_nSkateFlagCmd, 0, sizeof( m_nSkateFlagCmd ) );
 	V_memset( m_nSkateFlagBits, 0, sizeof( m_nSkateFlagBits ) );
+	for ( int i = 0; i < SKATE_FLAG_HISTORY; ++i )
+	{
+		m_vecSkateFlagImpulse[i].Init();
+	}
+	m_vecSkateSpawnVelocity.Init();
 
 	memset( m_pKartParticles, NULL, sizeof( m_pKartParticles ) );
 	memset( m_pKartSounds, NULL, sizeof( m_pKartSounds ) );

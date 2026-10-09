@@ -680,6 +680,8 @@ public:
 	int				m_nSkateFlagCount;
 	int				m_nSkateFlagCmd[ SKATE_FLAG_HISTORY ];
 	int				m_nSkateFlagBits[ SKATE_FLAG_HISTORY ];
+	Vector			m_vecSkateFlagImpulse[ SKATE_FLAG_HISTORY ];
+	Vector			m_vecSkateSpawnVelocity;
 	// Trick scoring (owner only), read by CHudSkateTricks.
 	int				m_nSkateTrickSeq;
 	char			m_szSkateTrick[ 64 ];
